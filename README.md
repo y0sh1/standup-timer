@@ -2,6 +2,20 @@
 
 Een single-page HTML standup timer met timer functionaliteit, checklist en confetti bij afronding.
 
+## GitHub Pages
+
+Deze pagina kan gehost worden met [GitHub Pages](https://pages.github.com/):
+
+1. Push de repo naar GitHub.
+2. Ga in de repo naar **Settings** → **Pages**.
+3. Bij **Source** kies **Deploy from a branch**.
+4. Bij **Branch** kies `main` (of je standaard branch), map **/ (root)**.
+5. Klik **Save**.
+
+De standup timer is dan bereikbaar op:
+[**https://y0sh1.github.io/standup-timer/**](https://y0sh1.github.io/standup-timer/)  
+(verwijst door naar `standup-timer.html`).
+
 ## Docker
 
 ### Build en run met Docker Compose
