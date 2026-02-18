@@ -262,6 +262,14 @@
             font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
         }
 
+        .schakel-moment-label {
+            font-size: 22px;
+            font-weight: 600;
+            color: #d29922;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
         .timer-display {
             font-size: 140px;
             font-weight: 700;
@@ -1204,6 +1212,7 @@
             <!-- Timer Section -->
             <div class="timer-section">
                 <div class="current-person" id="currentPerson">1</div>
+                <div class="schakel-moment-label" id="schakelMomentLabel" style="display: none;">Schakel moment — Volgende: <span id="nextPersonLabel"></span></div>
                 <div class="timer-display" id="timerDisplay">05:30</div>
                 <div class="progress-bar-container">
                     <div class="progress-bar" id="progressBar" style="width: 100%;"></div>
@@ -1320,7 +1329,9 @@
             isPaused: false,
             startTime: null,
             elapsedTime: 0,
-            totalElapsedTime: 0
+            totalElapsedTime: 0,
+            inTransition: false,
+            transitionTimeRemaining: 0
         };
 
         // DOM Elements
@@ -1347,6 +1358,8 @@
         const helpBtn = document.getElementById('helpBtn');
         const helpModal = document.getElementById('helpModal');
         const helpModalClose = document.getElementById('helpModalClose');
+        const schakelMomentLabel = document.getElementById('schakelMomentLabel');
+        const nextPersonLabel = document.getElementById('nextPersonLabel');
 
         // Load saved settings from localStorage
         function loadSettings() {
@@ -1570,6 +1583,23 @@
 
         // Update timer display
         function updateTimerDisplay() {
+            if (state.inTransition) {
+                currentPersonDisplay.style.display = 'none';
+                schakelMomentLabel.style.display = 'block';
+                const isLast = state.currentPersonIndex >= state.numPeople - 1;
+                nextPersonLabel.textContent = isLast ? 'Afronden' : (state.currentPersonIndex + 2).toString();
+                timerDisplay.textContent = formatTime(state.transitionTimeRemaining);
+                timerDisplay.classList.remove('warning', 'danger');
+                timerDisplay.classList.add('warning');
+                progressBar.style.width = '0%';
+                const totalRemaining = state.people.reduce((sum, p) => sum + p.timeRemaining, 0) + state.transitionTimeRemaining;
+                totalTimeRemaining.textContent = formatTime(totalRemaining);
+                return;
+            }
+
+            currentPersonDisplay.style.display = 'block';
+            schakelMomentLabel.style.display = 'none';
+
             const currentPerson = state.people[state.currentPersonIndex];
             if (!currentPerson) return;
 
@@ -1670,6 +1700,7 @@
                 updatePeopleList();
             } else {
                 // All people done
+                state.inTransition = false;
                 stopTimer();
                 playCompletionSound();
                 triggerConfetti();
@@ -1681,6 +1712,14 @@
         // Update control buttons visibility
         function updateControlButtons() {
             if (!state.isRunning) {
+                nextBtn.style.display = 'none';
+                finishBtn.style.display = 'none';
+                pauseBtn.style.display = 'none';
+                resumeBtn.style.display = 'none';
+                return;
+            }
+
+            if (state.inTransition) {
                 nextBtn.style.display = 'none';
                 finishBtn.style.display = 'none';
                 pauseBtn.style.display = 'none';
@@ -1701,6 +1740,18 @@
         function timerTick() {
             if (!state.isRunning || state.isPaused) return;
 
+            if (state.inTransition) {
+                state.transitionTimeRemaining -= 1;
+                state.totalElapsedTime += 1;
+                if (state.transitionTimeRemaining <= 0) {
+                    state.inTransition = false;
+                    moveToNextPerson(false); // Geluid al afgespeeld bij start schakelmoment
+                }
+                updateTimerDisplay();
+                updatePeopleList();
+                return;
+            }
+
             const currentPerson = state.people[state.currentPersonIndex];
             if (!currentPerson) return;
 
@@ -1709,7 +1760,10 @@
 
             if (currentPerson.timeRemaining <= 0) {
                 currentPerson.timeRemaining = 0;
-                moveToNextPerson(true);
+                // Start schakelmoment: 10% van spreektijd
+                state.inTransition = true;
+                state.transitionTimeRemaining = Math.max(1, Math.ceil(state.timePerPerson * 0.1));
+                playNotificationSound();
             }
 
             updateTimerDisplay();
@@ -1830,6 +1884,8 @@
             state.isRunning = false;
             state.isPaused = false;
             state.totalElapsedTime = 0;
+            state.inTransition = false;
+            state.transitionTimeRemaining = 0;
 
             mainContent.style.display = 'none';
             statusMessage.classList.remove('active');
