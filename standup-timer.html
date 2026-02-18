@@ -1379,10 +1379,13 @@
             }));
         }
 
-        // Calculate time per person with 10% margin
+        // Tijd per persoon zodat totaal = spreektijden + schakelmomenten (10% per overgang).
+        // n×T + (n-1)×0.1×T = totaal → T = totaal / (1.1×n - 0.1)
         function calculateTimePerPerson() {
-            const baseTime = (state.totalDuration * 60) / state.numPeople; // in seconds
-            return baseTime * 1.1; // Add 10% margin
+            const totalSec = state.totalDuration * 60;
+            const n = state.numPeople;
+            const divisor = 1.1 * n - 0.1; // n spreektijden + (n-1) schakelmomenten van 10%
+            return Math.floor(totalSec / divisor);
         }
 
         // Initialize people array
