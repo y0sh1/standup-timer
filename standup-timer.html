@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Een handige standup timer voor timeboxing tijdens team standups">
+    <meta name="theme-color" content="#0d1117">
+    <title>Standup Timer</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱️</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0d1117;
+            min-height: 100vh;
+            padding: 20px;
+            color: #c9d1d9;
+            transition: padding 0.3s;
+        }
+
+        body.fullscreen-active {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #161b22;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        /* Setup Panel */
+        .setup-panel {
+            background: #0d1117;
+            padding: 25px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .setup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .setup-header h1 {
+            font-size: 28px;
+            color: #58a6ff;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .toggle-setup {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            min-height: 44px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .toggle-setup:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+        }
+
+        .setup-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            align-items: end;
+        }
+
+        .setup-content.hidden {
+            display: none;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #c9d1d9;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            padding: 14px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            font-size: 17px;
+            color: #c9d1d9;
+            transition: all 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-height: 44px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .btn-primary {
+            background: #238636;
+            color: white;
+            border: 1px solid #2ea043;
+        }
+
+        .btn-primary:hover {
+            background: #2ea043;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3);
+        }
+
+        .btn-secondary {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+        }
+
+        .btn-secondary:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+        }
+
+        .btn-test {
+            background: #1f6feb;
+            color: white;
+            border: 1px solid #388bfd;
+        }
+
+        .btn-test:hover {
+            background: #388bfd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(56, 139, 253, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            padding: 40px;
+            min-height: 0;
+        }
+
+        /* iPad and Tablet Optimizations */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                padding: 30px;
+            }
+
+            .timer-display {
+                font-size: 100px;
+            }
+
+            .current-person {
+                font-size: 28px;
+            }
+
+            .setup-content {
+                gap: 15px;
+            }
+
+            .checklist-panel {
+                padding: 30px;
+            }
+
+            .people-overview {
+                margin-top: 40px;
+            }
+
+            .status-message {
+                padding: 60px 30px;
+                min-height: 400px;
+            }
+
+            .status-icon {
+                font-size: 70px;
+            }
+
+            .status-title {
+                font-size: 28px;
+            }
+
+            .btn {
+                padding: 14px 24px;
+                font-size: 17px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Timer Display */
+        .timer-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+            flex: 1;
+        }
+
+        .current-person {
+            font-size: 32px;
+            font-weight: 600;
+            color: #58a6ff;
+            margin-bottom: 20px;
+            text-align: center;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        }
+
+        .timer-display {
+            font-size: 140px;
+            font-weight: 700;
+            color: #3fb950;
+            margin: 30px 0;
+            font-variant-numeric: tabular-nums;
+            transition: color 0.3s;
+            text-align: center;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            text-shadow: 0 0 20px rgba(63, 185, 80, 0.3);
+            letter-spacing: 4px;
+        }
+
+        .timer-display.warning {
+            color: #d29922;
+            text-shadow: 0 0 20px rgba(210, 153, 34, 0.3);
+        }
+
+        .timer-display.danger {
+            color: #f85149;
+            text-shadow: 0 0 20px rgba(248, 81, 73, 0.5);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            max-width: 600px;
+            height: 24px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #238636, #3fb950);
+            transition: width 0.3s ease;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(63, 185, 80, 0.3);
+        }
+
+        .total-time {
+            font-size: 24px;
+            color: #c9d1d9;
+            margin-top: 20px;
+            text-align: center;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        }
+
+        .total-time-label {
+            font-size: 14px;
+            color: #8b949e;
+            margin-top: 5px;
+        }
+
+        /* Checklist Panel */
+        .checklist-panel {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 25px;
+            border: 1px solid #30363d;
+        }
+
+        .checklist-panel h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #58a6ff;
+            font-weight: 600;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #161b22;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            transition: all 0.3s;
+            min-height: 60px;
+        }
+
+        .checklist-item:hover {
+            border-color: #58a6ff;
+            box-shadow: 0 2px 8px rgba(88, 166, 255, 0.2);
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 28px;
+            height: 28px;
+            margin-right: 15px;
+            cursor: pointer;
+            accent-color: #3fb950;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+
+        .checklist-item label {
+            font-size: 16px;
+            color: #c9d1d9;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .checklist-item.completed {
+            background: rgba(46, 160, 67, 0.1);
+            border-color: #238636;
+        }
+
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: #8b949e;
+        }
+
+        /* People Overview */
+        .people-overview {
+            margin-top: 30px;
+        }
+
+        .people-overview h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #58a6ff;
+            font-weight: 600;
+        }
+
+        .people-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .person-card {
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 60px;
+        }
+
+        .person-card.past {
+            background: #0d1117;
+            color: #6e7681;
+            opacity: 0.6;
+            border-color: #21262d;
+        }
+
+        .person-card.current {
+            background: #1f6feb;
+            color: white;
+            border-color: #388bfd;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(31, 111, 235, 0.4);
+        }
+
+        .person-card.upcoming {
+            background: #161b22;
+            border-color: #30363d;
+            color: #c9d1d9;
+        }
+
+        .person-number {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .person-time {
+            font-size: 14px;
+            color: #8b949e;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        }
+
+        .person-card.current .person-time {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Status Messages */
+        .status-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 40px;
+            min-height: 500px;
+            text-align: center;
+        }
+
+        .status-message.active {
+            display: none;
+        }
+
+        .status-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            opacity: 0.6;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .status-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: #58a6ff;
+            margin-bottom: 15px;
+        }
+
+        .status-text {
+            font-size: 18px;
+            color: #8b949e;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+
+        .status-hint {
+            margin-top: 40px;
+            padding: 15px 25px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: #c9d1d9;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-hint-icon {
+            font-size: 20px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn-pause {
+            background: #d29922;
+            color: white;
+            border: 1px solid #e3b341;
+        }
+
+        .btn-pause:hover {
+            background: #e3b341;
+        }
+
+        .btn-resume {
+            background: #238636;
+            color: white;
+            border: 1px solid #2ea043;
+        }
+
+        .btn-resume:hover {
+            background: #2ea043;
+        }
+
+        .btn-next {
+            background: #1f6feb;
+            color: white;
+            border: 1px solid #388bfd;
+        }
+
+        .btn-next:hover {
+            background: #388bfd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(31, 111, 235, 0.3);
+        }
+
+        .btn-finish {
+            background: #da3633;
+            color: white;
+            border: 1px solid #f85149;
+        }
+
+        .btn-finish:hover {
+            background: #f85149;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(248, 81, 73, 0.3);
+        }
+
+        /* Responsive */
+        /* Mobile and Small Tablets */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                border-radius: 8px;
+            }
+
+            .setup-panel {
+                padding: 20px;
+            }
+
+            .setup-header h1 {
+                font-size: 24px;
+            }
+
+            .timer-display {
+                font-size: 80px;
+                letter-spacing: 2px;
+            }
+
+            .current-person {
+                font-size: 24px;
+            }
+
+            .main-content {
+                padding: 20px;
+                gap: 25px;
+            }
+
+            .setup-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                padding: 16px 24px;
+                font-size: 17px;
+            }
+
+            .checklist-panel {
+                padding: 20px;
+            }
+
+            .checklist-item {
+                padding: 18px;
+            }
+
+            .checklist-item input[type="checkbox"] {
+                width: 32px;
+                height: 32px;
+            }
+
+            .person-card {
+                padding: 18px;
+            }
+
+            .status-message {
+                padding: 40px 20px;
+                min-height: 300px;
+            }
+
+            .status-icon {
+                font-size: 60px;
+            }
+
+            .status-title {
+                font-size: 24px;
+            }
+
+            .status-text {
+                font-size: 16px;
+            }
+
+            .status-hint {
+                padding: 12px 20px;
+                font-size: 13px;
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .fullscreen-btn {
+                width: 50px;
+                height: 50px;
+                bottom: 15px;
+                right: 15px;
+            }
+
+            .progress-bar-container {
+                max-width: 100%;
+            }
+        }
+
+        /* Landscape iPad */
+        @media (max-width: 1024px) and (min-width: 769px) and (orientation: landscape) {
+            .main-content {
+                grid-template-columns: 1.2fr 0.8fr;
+                gap: 30px;
+            }
+
+            .timer-display {
+                font-size: 90px;
+            }
+
+            .status-message {
+                min-height: 300px;
+                padding: 40px 30px;
+            }
+        }
+
+        /* Fullscreen button */
+        .fullscreen-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            width: 56px;
+            height: 56px;
+            border-radius: 8px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .fullscreen-btn:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+            transform: scale(1.1);
+        }
+
+        /* Help button */
+        .help-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            width: 56px;
+            height: 56px;
+            border-radius: 8px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .help-btn:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+            transform: scale(1.1);
+        }
+
+        /* Help modal overlay */
+        .help-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .help-modal.active {
+            display: flex;
+        }
+
+        .help-modal-content {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .help-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .help-modal-header h2 {
+            font-size: 28px;
+            color: #58a6ff;
+            font-weight: 600;
+        }
+
+        .help-modal-close {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            font-size: 28px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .help-modal-close:hover {
+            background: #21262d;
+            color: #c9d1d9;
+        }
+
+        .help-shortcuts {
+            display: grid;
+            gap: 15px;
+        }
+
+        .help-shortcut-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+        }
+
+        .help-shortcut-key {
+            background: #21262d;
+            border: 1px solid #30363d;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            font-size: 14px;
+            color: #c9d1d9;
+            font-weight: 600;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .help-shortcut-desc {
+            color: #c9d1d9;
+            font-size: 16px;
+            flex: 1;
+            margin-left: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .help-btn {
+                width: 50px;
+                height: 50px;
+                bottom: 15px;
+                left: 15px;
+                font-size: 20px;
+            }
+
+            .help-modal-content {
+                padding: 20px;
+            }
+
+            .help-modal-header h2 {
+                font-size: 24px;
+            }
+
+            .help-shortcut-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .help-shortcut-desc {
+                margin-left: 0;
+            }
+        }
+
+        /* Fullscreen mode optimizations */
+        :fullscreen,
+        :-webkit-full-screen,
+        :-moz-full-screen,
+        :-ms-fullscreen {
+            background: #0d1117;
+        }
+
+        :fullscreen body,
+        :-webkit-full-screen body,
+        :-moz-full-screen body,
+        :-ms-fullscreen body {
+            padding: 0 !important;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        :fullscreen .container,
+        :-webkit-full-screen .container,
+        :-moz-full-screen .container,
+        :-ms-fullscreen .container {
+            max-width: 100%;
+            height: 100vh;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+        }
+
+        :fullscreen .setup-panel,
+        :-webkit-full-screen .setup-panel,
+        :-moz-full-screen .setup-panel,
+        :-ms-fullscreen .setup-panel {
+            flex-shrink: 0;
+            padding: 15px 20px;
+        }
+
+        :fullscreen .main-content,
+        :-webkit-full-screen .main-content,
+        :-moz-full-screen .main-content,
+        :-ms-fullscreen .main-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 15px;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        :fullscreen .timer-section,
+        :-webkit-full-screen .timer-section,
+        :-moz-full-screen .timer-section,
+        :-ms-fullscreen .timer-section {
+            min-height: 0;
+            flex: 1 1 auto;
+            justify-content: flex-start;
+            padding-bottom: 10px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        :fullscreen .timer-section > *,
+        :-webkit-full-screen .timer-section > *,
+        :-moz-full-screen .timer-section > *,
+        :-ms-fullscreen .timer-section > * {
+            flex-shrink: 0;
+        }
+
+        :fullscreen .status-message,
+        :-webkit-full-screen .status-message,
+        :-moz-full-screen .status-message,
+        :-ms-fullscreen .status-message {
+            flex: 1;
+            min-height: 0;
+            padding: 40px 20px;
+        }
+
+        /* Fullscreen mode for iPad specifically */
+        @media (max-width: 1024px) {
+            :fullscreen .timer-display,
+            :-webkit-full-screen .timer-display,
+            :-moz-full-screen .timer-display,
+            :-ms-fullscreen .timer-display {
+                font-size: 100px;
+                margin: 15px 0;
+            }
+
+            :fullscreen .current-person,
+            :-webkit-full-screen .current-person,
+            :-moz-full-screen .current-person,
+            :-ms-fullscreen .current-person {
+                font-size: 28px;
+                margin-bottom: 15px;
+            }
+
+            :fullscreen .main-content,
+            :-webkit-full-screen .main-content,
+            :-moz-full-screen .main-content,
+            :-ms-fullscreen .main-content {
+                padding: 10px;
+                gap: 15px;
+            }
+
+            :fullscreen .timer-section,
+            :-webkit-full-screen .timer-section,
+            :-moz-full-screen .timer-section,
+            :-ms-fullscreen .timer-section {
+                padding-bottom: 10px;
+            }
+
+            :fullscreen .progress-bar-container,
+            :-webkit-full-screen .progress-bar-container,
+            :-moz-full-screen .progress-bar-container,
+            :-ms-fullscreen .progress-bar-container {
+                margin: 15px 0;
+            }
+
+            :fullscreen .total-time,
+            :-webkit-full-screen .total-time,
+            :-moz-full-screen .total-time,
+            :-ms-fullscreen .total-time {
+                margin-top: 15px;
+                font-size: 20px;
+            }
+
+            :fullscreen .controls,
+            :-webkit-full-screen .controls,
+            :-moz-full-screen .controls,
+            :-ms-fullscreen .controls {
+                margin-top: 15px;
+                margin-bottom: 10px;
+                padding-bottom: 10px;
+            }
+
+            :fullscreen .setup-header h1,
+            :-webkit-full-screen .setup-header h1,
+            :-moz-full-screen .setup-header h1,
+            :-ms-fullscreen .setup-header h1 {
+                font-size: 22px;
+            }
+
+            :fullscreen .setup-panel,
+            :-webkit-full-screen .setup-panel,
+            :-moz-full-screen .setup-panel,
+            :-ms-fullscreen .setup-panel {
+                padding: 12px 15px;
+            }
+
+            :fullscreen .checklist-panel,
+            :-webkit-full-screen .checklist-panel,
+            :-moz-full-screen .checklist-panel,
+            :-ms-fullscreen .checklist-panel {
+                padding: 20px;
+            }
+        }
+
+        /* Fullscreen landscape iPad */
+        @media (max-width: 1024px) and (orientation: landscape) {
+            :fullscreen .main-content,
+            :-webkit-full-screen .main-content,
+            :-moz-full-screen .main-content,
+            :-ms-fullscreen .main-content {
+                grid-template-columns: 1.2fr 0.8fr;
+            }
+
+            :fullscreen .timer-display,
+            :-webkit-full-screen .timer-display,
+            :-moz-full-screen .timer-display,
+            :-ms-fullscreen .timer-display {
+                font-size: 90px;
+                margin: 10px 0;
+            }
+
+            :fullscreen .current-person,
+            :-webkit-full-screen .current-person,
+            :-moz-full-screen .current-person,
+            :-ms-fullscreen .current-person {
+                font-size: 24px;
+                margin-bottom: 10px;
+            }
+
+            :fullscreen .progress-bar-container,
+            :-webkit-full-screen .progress-bar-container,
+            :-moz-full-screen .progress-bar-container,
+            :-ms-fullscreen .progress-bar-container {
+                margin: 10px 0;
+            }
+
+            :fullscreen .total-time,
+            :-webkit-full-screen .total-time,
+            :-moz-full-screen .total-time,
+            :-ms-fullscreen .total-time {
+                margin-top: 10px;
+                font-size: 18px;
+            }
+
+            :fullscreen .controls,
+            :-webkit-full-screen .controls,
+            :-moz-full-screen .controls,
+            :-ms-fullscreen .controls {
+                margin-top: 10px;
+                margin-bottom: 5px;
+            }
+        }
+
+        /* Fullscreen portrait iPad */
+        @media (max-width: 1024px) and (orientation: portrait) {
+            :fullscreen .main-content,
+            :-webkit-full-screen .main-content,
+            :-moz-full-screen .main-content,
+            :-ms-fullscreen .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            :fullscreen .timer-display,
+            :-webkit-full-screen .timer-display,
+            :-moz-full-screen .timer-display,
+            :-ms-fullscreen .timer-display {
+                font-size: 90px;
+                margin: 10px 0;
+            }
+
+            :fullscreen .current-person,
+            :-webkit-full-screen .current-person,
+            :-moz-full-screen .current-person,
+            :-ms-fullscreen .current-person {
+                font-size: 26px;
+                margin-bottom: 10px;
+            }
+
+            :fullscreen .progress-bar-container,
+            :-webkit-full-screen .progress-bar-container,
+            :-moz-full-screen .progress-bar-container,
+            :-ms-fullscreen .progress-bar-container {
+                margin: 10px 0;
+            }
+
+            :fullscreen .total-time,
+            :-webkit-full-screen .total-time,
+            :-moz-full-screen .total-time,
+            :-ms-fullscreen .total-time {
+                margin-top: 10px;
+                font-size: 18px;
+            }
+
+            :fullscreen .controls,
+            :-webkit-full-screen .controls,
+            :-moz-full-screen .controls,
+            :-ms-fullscreen .controls {
+                margin-top: 10px;
+                margin-bottom: 5px;
+            }
+        }
+
+        /* Confetti overlay – waterval van boven naar beneden, oneindig tot Reset */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            top: -20px;
+            left: var(--start-x, 50%);
+            animation: confetti-fall linear forwards;
+        }
+
+        .confetti-piece.rect {
+            width: 10px;
+            height: 18px;
+        }
+
+        .confetti-piece.large {
+            width: 16px;
+            height: 16px;
+        }
+
+        .confetti-emoji {
+            position: absolute;
+            top: -50px;
+            left: var(--start-x, 50%);
+            font-size: 28px;
+            line-height: 1;
+            animation: confetti-fall linear forwards;
+            text-shadow: 0 0 8px rgba(255,255,255,0.8);
+        }
+
+        .confetti-emoji.big {
+            font-size: 42px;
+        }
+
+        /* Val van boven (buiten beeld) naar beneden (onder beeld weg) */
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0) translateX(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(120vh) translateX(var(--drift, 0)) rotate(720deg);
+                opacity: 0.9;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Setup Panel -->
+        <div class="setup-panel">
+            <div class="setup-header">
+                <h1>Standup Timer</h1>
+                <button class="toggle-setup" id="toggleSetup">Verberg Setup</button>
+            </div>
+            <div class="setup-content" id="setupContent">
+                <div class="input-group">
+                    <label for="numPeople">Aantal personen</label>
+                    <input type="number" id="numPeople" min="1" max="20" value="4" />
+                </div>
+                <div class="input-group">
+                    <label for="totalDuration">Totale duur (minuten)</label>
+                    <input type="number" id="totalDuration" min="5" max="60" value="20" />
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-primary" id="startBtn">Start Standup</button>
+                    <button class="btn btn-secondary" id="resetBtn" disabled>Reset</button>
+                    <button class="btn btn-test" id="testSoundBtn">🔊 Test Geluid</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content" id="mainContent" style="display: none;">
+            <!-- Timer Section -->
+            <div class="timer-section">
+                <div class="current-person" id="currentPerson">1</div>
+                <div class="timer-display" id="timerDisplay">05:30</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar" style="width: 100%;"></div>
+                </div>
+                <div class="total-time">
+                    <div id="totalTimeRemaining">20:00</div>
+                    <div class="total-time-label">Totaal resterende tijd</div>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-pause" id="pauseBtn" style="display: none;">Pauze</button>
+                    <button class="btn btn-resume" id="resumeBtn" style="display: none;">Hervatten</button>
+                    <button class="btn btn-next" id="nextBtn" style="display: none;">⏭️ Volgende</button>
+                    <button class="btn btn-finish" id="finishBtn" style="display: none;">✓ Afronden</button>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div style="display: flex; flex-direction: column; min-height: 0; overflow-y: auto;">
+                <!-- Checklist Panel -->
+                <div class="checklist-panel">
+                    <h2>Checklist</h2>
+                    <div id="checklist">
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check1" />
+                            <label for="check1">Gisteren (wat heb je gedaan)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check2" />
+                            <label for="check2">Vandaag (wat ga je doen)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check3" />
+                            <label for="check3">Blokkades (waar loop je tegenaan)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- People Overview -->
+                <div class="people-overview">
+                    <h2>Personen</h2>
+                    <div class="people-list" id="peopleList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Message (shown when not started) -->
+        <div class="status-message" id="statusMessage">
+            <div class="status-icon">⏱️</div>
+            <div class="status-title">Klaar voor de standup</div>
+            <div class="status-text">
+                Stel hierboven het aantal personen en de totale duur in,<br>
+                en start de timer wanneer iedereen klaar is.
+            </div>
+            <div class="status-hint">
+                <span class="status-hint-icon">💡</span>
+                <span>Tip: Gebruik de test knop om het geluid te controleren</span>
+            </div>
+        </div>
+    </div>
+
+    <button class="help-btn" id="helpBtn" title="Help & Keyboard Shortcuts">?</button>
+    <button class="fullscreen-btn" id="fullscreenBtn" title="Volledig scherm">⛶</button>
+
+    <!-- Help Modal -->
+    <div class="help-modal" id="helpModal">
+        <div class="help-modal-content">
+            <div class="help-modal-header">
+                <h2>Keyboard Shortcuts</h2>
+                <button class="help-modal-close" id="helpModalClose" aria-label="Sluiten">×</button>
+            </div>
+            <div class="help-shortcuts">
+                <div class="help-shortcut-item">
+                    <span class="help-shortcut-key">Spatie</span>
+                    <span class="help-shortcut-desc">Start standup / Pauze / Hervatten</span>
+                </div>
+                <div class="help-shortcut-item">
+                    <span class="help-shortcut-key">N</span>
+                    <span class="help-shortcut-desc">Volgende persoon (tijdens standup)</span>
+                </div>
+                <div class="help-shortcut-item">
+                    <span class="help-shortcut-key">F</span>
+                    <span class="help-shortcut-desc">Afronden (bij laatste persoon)</span>
+                </div>
+                <div class="help-shortcut-item">
+                    <span class="help-shortcut-key">R</span>
+                    <span class="help-shortcut-desc">Reset (wanneer standup niet actief)</span>
+                </div>
+                <div class="help-shortcut-item">
+                    <span class="help-shortcut-key">Esc</span>
+                    <span class="help-shortcut-desc">Setup panel tonen/verbergen of help sluiten</span>
+                </div>
+                <div class="help-shortcut-item">
+                    <span class="help-shortcut-key">H</span>
+                    <span class="help-shortcut-desc">Help modal openen</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let confettiContainer = null;
+        let confettiStopped = false;
+        let confettiInterval = null;
+
+        let state = {
+            numPeople: 4,
+            totalDuration: 20,
+            timePerPerson: 0,
+            currentPersonIndex: 0,
+            people: [],
+            timerInterval: null,
+            isRunning: false,
+            isPaused: false,
+            startTime: null,
+            elapsedTime: 0,
+            totalElapsedTime: 0
+        };
+
+        // DOM Elements
+        const numPeopleInput = document.getElementById('numPeople');
+        const totalDurationInput = document.getElementById('totalDuration');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const toggleSetupBtn = document.getElementById('toggleSetup');
+        const setupContent = document.getElementById('setupContent');
+        const mainContent = document.getElementById('mainContent');
+        const statusMessage = document.getElementById('statusMessage');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const currentPersonDisplay = document.getElementById('currentPerson');
+        const progressBar = document.getElementById('progressBar');
+        const totalTimeRemaining = document.getElementById('totalTimeRemaining');
+        const checklist = document.getElementById('checklist');
+        const peopleList = document.getElementById('peopleList');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const finishBtn = document.getElementById('finishBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const testSoundBtn = document.getElementById('testSoundBtn');
+        const helpBtn = document.getElementById('helpBtn');
+        const helpModal = document.getElementById('helpModal');
+        const helpModalClose = document.getElementById('helpModalClose');
+
+        // Load saved settings from localStorage
+        function loadSettings() {
+            const saved = localStorage.getItem('standupSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                numPeopleInput.value = settings.numPeople || 4;
+                totalDurationInput.value = settings.totalDuration || 20;
+            }
+        }
+
+        // Save settings to localStorage
+        function saveSettings() {
+            localStorage.setItem('standupSettings', JSON.stringify({
+                numPeople: parseInt(numPeopleInput.value),
+                totalDuration: parseInt(totalDurationInput.value)
+            }));
+        }
+
+        // Calculate time per person with 10% margin
+        function calculateTimePerPerson() {
+            const baseTime = (state.totalDuration * 60) / state.numPeople; // in seconds
+            return baseTime * 1.1; // Add 10% margin
+        }
+
+        // Initialize people array
+        function initializePeople() {
+            state.people = [];
+            for (let i = 0; i < state.numPeople; i++) {
+                state.people.push({
+                    index: i + 1,
+                    timeRemaining: state.timePerPerson,
+                    completed: false
+                });
+            }
+        }
+
+        // Play sound notification - Pleasant chime
+        function playNotificationSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Soft chime: play a note with gentle attack and decay
+                function playChime(frequency, startTime, duration, volume) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+
+                    osc.frequency.value = frequency;
+                    osc.type = 'sine';
+
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
+                    gain.gain.linearRampToValueAtTime(volume * 0.6, startTime + duration * 0.4);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+                    osc.start(startTime);
+                    osc.stop(startTime + duration);
+                }
+
+                const t = audioContext.currentTime;
+                const vol = 0.25;
+
+                // Ascending three-note chime (C5 - E5 - G5, major arpeggio)
+                playChime(523.25, t, 0.35, vol);       // C5
+                playChime(659.25, t + 0.12, 0.4, vol);  // E5
+                playChime(783.99, t + 0.28, 0.5, vol);  // G5
+                
+            } catch (e) {
+                console.log('Audio notification not available:', e);
+            }
+        }
+
+        // Uitbundig feestgeluid bij afronden standup
+        function playCompletionSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const v = 0.22;
+
+                function note(freq, start, duration, vol) {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.frequency.value = freq;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0, start);
+                    gain.gain.linearRampToValueAtTime(vol, start + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+                    osc.start(start);
+                    osc.stop(start + duration);
+                }
+
+                function chord(freqs, start, duration, vol) {
+                    freqs.forEach(function(f) { note(f, start, duration, vol); });
+                }
+
+                const t = ctx.currentTime;
+                // Opbouw: korte vrolijke staccato-noten omhoog (C-majeur arpeggio)
+                note(523.25, t, 0.12, v);       // C5
+                note(659.25, t + 0.08, 0.12, v);  // E5
+                note(783.99, t + 0.16, 0.12, v);  // G5
+                note(1046.50, t + 0.24, 0.12, v); // C6
+                note(1318.51, t + 0.32, 0.14, v); // E6
+                note(1567.98, t + 0.40, 0.18, v); // G6
+                // Topnoot – korte “piek”
+                note(2093.00, t + 0.52, 0.25, v * 1.1); // C7
+                // Grote triomfantelijke slotakkoord (C-majeur, laag tot hoog)
+                chord([523.25, 659.25, 783.99, 1046.50, 1318.51], t + 0.72, 1.0, v);
+            } catch (e) {
+                console.log('Completion sound not available:', e);
+            }
+        }
+
+        // Voeg confetti toe aan container - natuurlijke continue stroom
+        function addConfettiBatch(container) {
+            if (confettiStopped || !container || !container.parentNode) return;
+            
+            const colors = ['#3fb950', '#58a6ff', '#f85149', '#d29922', '#a371f7', '#79c0ff', '#ff7b72', '#ffa657', '#7ee787', '#ffde5c'];
+            const emojis = ['🎉', '🎊', '⭐', '✨', '🏆', '👍', '💪', '🎈', '🌟', '✅', '🔥', '💯', '🥳', '👏', '🎯'];
+            
+            // Meer confetti voor rijkere waterval: 5-12 confetti stukjes
+            const pieceCount = 5 + Math.floor(Math.random() * 7);
+            for (let i = 0; i < pieceCount; i++) {
+                const piece = document.createElement('div');
+                let cls = 'confetti-piece';
+                if (Math.random() > 0.5) cls += ' rect';
+                if (Math.random() > 0.75) cls += ' large';
+                piece.className = cls;
+                piece.style.setProperty('--start-x', Math.random() * 100 + '%');
+                piece.style.setProperty('--drift', (Math.random() - 0.5) * 80 + 'px');
+                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.animationDuration = (2 + Math.random() * 2) + 's'; // Langzamer: 2-4s
+                piece.style.animationDelay = (Math.random() * 0.1) + 's'; // Kleine variatie in start
+                piece.style.borderRadius = Math.random() > 0.6 ? '50%' : '0';
+                container.appendChild(piece);
+            }
+            
+            // Vaker emoji's voor meer feest: 50% kans
+            if (Math.random() > 0.5) {
+                const emojiCount = 1 + Math.floor(Math.random() * 2); // 1-2 emoji's per batch
+                for (let i = 0; i < emojiCount; i++) {
+                    const em = document.createElement('div');
+                    em.className = 'confetti-emoji' + (Math.random() > 0.6 ? ' big' : '');
+                    em.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                    em.style.setProperty('--start-x', Math.random() * 100 + '%');
+                    em.style.setProperty('--drift', (Math.random() - 0.5) * 100 + 'px');
+                    em.style.animationDuration = (2.5 + Math.random() * 2) + 's'; // Langzamer: 2.5-4.5s
+                    em.style.animationDelay = (Math.random() * 0.1) + 's';
+                    container.appendChild(em);
+                }
+            }
+        }
+
+        // Confetti waterval – van boven naar beneden, oneindig tot op Reset wordt geklikt
+        function triggerConfetti() {
+            if (confettiContainer) {
+                confettiContainer.remove();
+            }
+            if (confettiInterval) {
+                clearInterval(confettiInterval);
+            }
+            
+            confettiStopped = false;
+            const container = document.createElement('div');
+            container.className = 'confetti-container';
+            document.body.appendChild(container);
+            confettiContainer = container;
+
+            // Start met meer batches voor direct effect
+            for (let i = 0; i < 8; i++) {
+                setTimeout(() => addConfettiBatch(container), i * 40);
+            }
+            
+            // Voeg continu batches toe voor natuurlijke waterval
+            // Variabele interval voor natuurlijker patroon
+            function scheduleNextBatch() {
+                if (confettiStopped || !container || !container.parentNode) {
+                    clearTimeout(confettiInterval);
+                    confettiInterval = null;
+                    return;
+                }
+                addConfettiBatch(container);
+                // Volgende batch na 50-100ms (vaker spawnen voor meer confetti)
+                const nextDelay = 50 + Math.random() * 50;
+                confettiInterval = setTimeout(scheduleNextBatch, nextDelay);
+            }
+            
+            // Start de continue stroom
+            confettiInterval = setTimeout(scheduleNextBatch, 80);
+        }
+
+        function stopConfetti() {
+            // Stop met nieuwe confetti spawnen
+            confettiStopped = true;
+            if (confettiInterval) {
+                clearTimeout(confettiInterval);
+                confettiInterval = null;
+            }
+            
+            if (confettiContainer) {
+                // Verwijder container na langste animatie duur (max duration)
+                // zodat alle confetti natuurlijk kan doorvallen en het scherm schoon wordt
+                setTimeout(function() {
+                    if (confettiContainer && confettiContainer.parentNode) {
+                        confettiContainer.remove();
+                        confettiContainer = null;
+                    }
+                }, 6000); // 4.5s max duration + buffer
+            }
+        }
+
+        // Format time as MM:SS
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Update timer display
+        function updateTimerDisplay() {
+            const currentPerson = state.people[state.currentPersonIndex];
+            if (!currentPerson) return;
+
+            const timeRemaining = currentPerson.timeRemaining;
+            timerDisplay.textContent = formatTime(timeRemaining);
+
+            // Update visual state
+            timerDisplay.classList.remove('warning', 'danger');
+            if (timeRemaining <= 30) {
+                timerDisplay.classList.add('danger');
+            } else if (timeRemaining <= 60) {
+                timerDisplay.classList.add('warning');
+            }
+
+            // Update progress bar
+            const progress = (timeRemaining / state.timePerPerson) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            // Update total time remaining
+            const totalRemaining = state.people.reduce((sum, p) => sum + p.timeRemaining, 0);
+            totalTimeRemaining.textContent = formatTime(totalRemaining);
+        }
+
+        // Update people list display
+        function updatePeopleList() {
+            peopleList.innerHTML = '';
+            state.people.forEach((person, index) => {
+                const card = document.createElement('div');
+                let className = 'person-card';
+                
+                if (index < state.currentPersonIndex) {
+                    className += ' past';
+                } else if (index === state.currentPersonIndex) {
+                    className += ' current';
+                } else {
+                    className += ' upcoming';
+                }
+
+                card.className = className;
+                card.innerHTML = `
+                    <div>
+                        <div class="person-number">${person.index}</div>
+                        <div class="person-time">${formatTime(person.timeRemaining)}</div>
+                    </div>
+                `;
+                peopleList.appendChild(card);
+            });
+        }
+
+        // Reset checklist
+        function resetChecklist() {
+            const checkboxes = checklist.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                const item = cb.closest('.checklist-item');
+                item.classList.remove('completed');
+            });
+        }
+
+        // Update checklist event listeners
+        function setupChecklistListeners() {
+            const checkboxes = checklist.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const item = this.closest('.checklist-item');
+                    if (this.checked) {
+                        item.classList.add('completed');
+                    } else {
+                        item.classList.remove('completed');
+                    }
+                });
+            });
+        }
+
+        // Move to next person
+        function moveToNextPerson(playSound = true) {
+            const currentPerson = state.people[state.currentPersonIndex];
+            if (currentPerson) {
+                currentPerson.completed = true;
+                currentPerson.timeRemaining = 0; // Zodat totale resterende tijd correct wordt herberekend
+            }
+
+            if (playSound) {
+                // Play notification sound
+                playNotificationSound();
+            }
+
+            // Move to next person
+            if (state.currentPersonIndex < state.numPeople - 1) {
+                state.currentPersonIndex++;
+                currentPersonDisplay.textContent = `${state.currentPersonIndex + 1}`;
+                resetChecklist();
+                
+                // Update button visibility
+                updateControlButtons();
+                
+                updateTimerDisplay();
+                updatePeopleList();
+            } else {
+                // All people done
+                stopTimer();
+                playCompletionSound();
+                triggerConfetti();
+                showSetupPanel();
+                return;
+            }
+        }
+
+        // Update control buttons visibility
+        function updateControlButtons() {
+            if (!state.isRunning) {
+                nextBtn.style.display = 'none';
+                finishBtn.style.display = 'none';
+                pauseBtn.style.display = 'none';
+                resumeBtn.style.display = 'none';
+                return;
+            }
+
+            const isLastPerson = state.currentPersonIndex >= state.numPeople - 1;
+            const hasNextPerson = state.currentPersonIndex < state.numPeople - 1;
+            
+            nextBtn.style.display = hasNextPerson ? 'inline-block' : 'none';
+            finishBtn.style.display = isLastPerson ? 'inline-block' : 'none';
+            pauseBtn.style.display = state.isPaused ? 'none' : 'inline-block';
+            resumeBtn.style.display = state.isPaused ? 'inline-block' : 'none';
+        }
+
+        // Timer tick
+        function timerTick() {
+            if (!state.isRunning || state.isPaused) return;
+
+            const currentPerson = state.people[state.currentPersonIndex];
+            if (!currentPerson) return;
+
+            currentPerson.timeRemaining -= 1;
+            state.totalElapsedTime += 1;
+
+            if (currentPerson.timeRemaining <= 0) {
+                currentPerson.timeRemaining = 0;
+                moveToNextPerson(true);
+            }
+
+            updateTimerDisplay();
+            updatePeopleList();
+        }
+
+        // Start timer
+        function startTimer() {
+            const numPeople = parseInt(numPeopleInput.value, 10);
+            const totalDuration = parseInt(totalDurationInput.value, 10);
+
+            if (isNaN(numPeople) || numPeople < 1) {
+                alert('Vul een geldig aantal personen in (minimaal 1).');
+                numPeopleInput.focus();
+                return;
+            }
+            if (isNaN(totalDuration) || totalDuration < 1) {
+                alert('Vul een geldige totale duur in (minimaal 1 minuut).');
+                totalDurationInput.focus();
+                return;
+            }
+
+            state.numPeople = numPeople;
+            state.totalDuration = totalDuration;
+            state.timePerPerson = calculateTimePerPerson();
+            state.currentPersonIndex = 0;
+            state.isRunning = true;
+            state.isPaused = false;
+            state.startTime = Date.now();
+            state.totalElapsedTime = 0;
+
+            initializePeople();
+            updateTimerDisplay();
+            updatePeopleList();
+            resetChecklist();
+            setupChecklistListeners();
+
+            currentPersonDisplay.textContent = `1`;
+
+            // Show main content, hide status message
+            mainContent.style.display = 'grid';
+            statusMessage.classList.add('active');
+
+            // Hide setup panel automatically when starting
+            setupContent.classList.add('hidden');
+            toggleSetupBtn.textContent = 'Toon Setup';
+
+            // Start interval
+            state.timerInterval = setInterval(timerTick, 1000);
+
+            // Update buttons
+            startBtn.disabled = true;
+            resetBtn.disabled = false;
+            pauseBtn.style.display = 'inline-block';
+            resumeBtn.style.display = 'none';
+            updateControlButtons();
+
+            saveSettings();
+        }
+
+        // Stop timer
+        function stopTimer() {
+            state.isRunning = false;
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+        }
+
+        // Pause timer
+        function pauseTimer() {
+            state.isPaused = true;
+            pauseBtn.style.display = 'none';
+            resumeBtn.style.display = 'inline-block';
+            updateControlButtons();
+        }
+
+        // Resume timer
+        function resumeTimer() {
+            state.isPaused = false;
+            pauseBtn.style.display = 'inline-block';
+            resumeBtn.style.display = 'none';
+            updateControlButtons();
+        }
+
+        // Go to next person manually
+        function goToNextPerson() {
+            if (state.currentPersonIndex < state.numPeople - 1) {
+                moveToNextPerson(false); // Don't play sound for manual advance
+            }
+        }
+
+        // Finish standup
+        function finishStandup() {
+            stopTimer();
+            
+            // Mark current person as completed
+            const currentPerson = state.people[state.currentPersonIndex];
+            if (currentPerson) {
+                currentPerson.completed = true;
+            }
+            
+            // Feestelijk afronden
+            playCompletionSound();
+            triggerConfetti();
+            showSetupPanel();
+            
+            // Update display
+            updateTimerDisplay();
+            updatePeopleList();
+            updateControlButtons();
+        }
+
+        // Reset timer
+        function resetTimer() {
+            stopTimer();
+            state.currentPersonIndex = 0;
+            state.isRunning = false;
+            state.isPaused = false;
+            state.totalElapsedTime = 0;
+
+            mainContent.style.display = 'none';
+            statusMessage.classList.remove('active');
+
+            stopConfetti();
+
+            // Show setup panel again when resetting
+            setupContent.classList.remove('hidden');
+            toggleSetupBtn.textContent = 'Verberg Setup';
+
+            startBtn.disabled = false;
+            resetBtn.disabled = true;
+            pauseBtn.style.display = 'none';
+            resumeBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+            finishBtn.style.display = 'none';
+
+            timerDisplay.classList.remove('warning', 'danger');
+        }
+
+        // Show setup panel (e.g. after standup ends)
+        function showSetupPanel() {
+            setupContent.classList.remove('hidden');
+            toggleSetupBtn.textContent = 'Verberg Setup';
+            // Scroll setup into view so user sees Start/Reset
+            document.querySelector('.setup-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Toggle setup panel
+        function toggleSetup() {
+            setupContent.classList.toggle('hidden');
+            toggleSetupBtn.textContent = setupContent.classList.contains('hidden') 
+                ? 'Toon Setup' 
+                : 'Verberg Setup';
+        }
+
+        // Fullscreen functionality
+        function toggleFullscreen() {
+            const element = document.documentElement;
+            
+            if (!document.fullscreenElement && 
+                !document.webkitFullscreenElement && 
+                !document.mozFullScreenElement && 
+                !document.msFullscreenElement) {
+                // Enter fullscreen
+                if (element.requestFullscreen) {
+                    element.requestFullscreen().catch(err => {
+                        console.log('Fullscreen not supported');
+                    });
+                } else if (element.webkitRequestFullscreen) {
+                    element.webkitRequestFullscreen();
+                } else if (element.mozRequestFullScreen) {
+                    element.mozRequestFullScreen();
+                } else if (element.msRequestFullscreen) {
+                    element.msRequestFullscreen();
+                }
+                fullscreenBtn.textContent = '⛶';
+            } else {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                fullscreenBtn.textContent = '⛶';
+            }
+        }
+
+        // Test sound function
+        function testSound() {
+            playNotificationSound();
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', startTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        resumeBtn.addEventListener('click', resumeTimer);
+        nextBtn.addEventListener('click', goToNextPerson);
+        finishBtn.addEventListener('click', finishStandup);
+        toggleSetupBtn.addEventListener('click', toggleSetup);
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+        testSoundBtn.addEventListener('click', testSound);
+        helpBtn.addEventListener('click', openHelpModal);
+        helpModalClose.addEventListener('click', closeHelpModal);
+        
+        // Close modal when clicking outside
+        helpModal.addEventListener('click', function(e) {
+            if (e.target === helpModal) {
+                closeHelpModal();
+            }
+        });
+
+        // Update fullscreen button text when entering/exiting fullscreen
+        function handleFullscreenChange() {
+            const isFullscreen = !!(document.fullscreenElement || 
+                                   document.webkitFullscreenElement || 
+                                   document.mozFullScreenElement || 
+                                   document.msFullscreenElement);
+            
+            if (isFullscreen) {
+                fullscreenBtn.textContent = '⛶';
+                document.body.classList.add('fullscreen-active');
+                document.body.style.padding = '0';
+            } else {
+                fullscreenBtn.textContent = '⛶';
+                document.body.classList.remove('fullscreen-active');
+                document.body.style.padding = '';
+            }
+        }
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Don't trigger shortcuts when typing in inputs
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            // Spacebar: Start/Pause/Resume
+            if (e.code === 'Space' && !e.target.closest('button')) {
+                e.preventDefault();
+                if (!state.isRunning) {
+                    if (!startBtn.disabled) startTimer();
+                } else if (state.isPaused) {
+                    resumeTimer();
+                } else {
+                    pauseTimer();
+                }
+            }
+
+            // N: Next person
+            if (e.code === 'KeyN' && state.isRunning && !state.isPaused) {
+                if (nextBtn.style.display !== 'none') {
+                    goToNextPerson();
+                }
+            }
+
+            // F: Finish (when on last person)
+            if (e.code === 'KeyF' && state.isRunning && !state.isPaused) {
+                if (finishBtn.style.display !== 'none') {
+                    finishStandup();
+                }
+            }
+
+            // R: Reset (when not running)
+            if (e.code === 'KeyR' && !state.isRunning) {
+                if (!resetBtn.disabled) {
+                    resetTimer();
+                }
+            }
+
+            // Escape: Toggle setup panel or close help modal
+            if (e.code === 'Escape') {
+                if (helpModal.classList.contains('active')) {
+                    closeHelpModal();
+                } else {
+                    toggleSetup();
+                }
+            }
+
+            // H: Open help modal
+            if (e.code === 'KeyH' && !helpModal.classList.contains('active')) {
+                openHelpModal();
+            }
+        });
+
+        // Help modal functions
+        function openHelpModal() {
+            helpModal.classList.add('active');
+        }
+
+        function closeHelpModal() {
+            helpModal.classList.remove('active');
+        }
+
+        // Initialize
+        loadSettings();
+        setupChecklistListeners();
+    </script>
+</body>
+</html>
