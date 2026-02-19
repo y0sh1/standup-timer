@@ -1758,7 +1758,7 @@
         }
 
         // Initialize people array - alleen aangevinkte namen, in willekeurige volgorde
-        // timePerPerson moet al berekend zijn voordat deze functie wordt aangeroepen
+        // Berekent timePerPerson en initialiseert state.people met geschudde namen
         function initializePeople() {
             const presentNames = state.names.filter(n => n.present);
             state.numPeople = presentNames.length;
@@ -2084,12 +2084,8 @@
                 nextPersonInfo.style.display = 'none';
             } else {
                 const nextPerson = state.people[state.currentPersonIndex + 1];
-                if (nextPerson) {
-                    nextPersonInfo.style.display = 'block';
-                    nextPersonName.textContent = nextPerson.name || `Persoon ${nextPerson.index}`;
-                } else {
-                    nextPersonInfo.style.display = 'none';
-                }
+                nextPersonInfo.style.display = 'block';
+                nextPersonName.textContent = nextPerson.name || `Persoon ${nextPerson.index}`;
             }
 
             const timeRemaining = currentPerson.timeRemaining;
@@ -2112,8 +2108,13 @@
             totalTimeRemaining.textContent = formatTime(totalRemaining);
         }
 
-        // Update people list display
+        // Update people list display (alleen renderen als zichtbaar)
         function updatePeopleList() {
+            // Skip rendering als lijst verborgen is (tijdens standup)
+            if (peopleOverview.style.display === 'none') {
+                return;
+            }
+            
             peopleList.innerHTML = '';
             state.people.forEach((person, index) => {
                 const card = document.createElement('div');
@@ -2194,7 +2195,7 @@
                 updateControlButtons();
                 
                 updateTimerDisplay();
-                updatePeopleList();
+                // updatePeopleList() niet nodig - lijst is verborgen tijdens standup
             } else {
                 // All people done
                 state.inTransition = false;
@@ -2225,9 +2226,8 @@
             }
 
             const isLastPerson = state.currentPersonIndex >= state.numPeople - 1;
-            const hasNextPerson = state.currentPersonIndex < state.numPeople - 1;
             
-            nextBtn.style.display = hasNextPerson ? 'inline-block' : 'none';
+            nextBtn.style.display = isLastPerson ? 'none' : 'inline-block';
             finishBtn.style.display = isLastPerson ? 'inline-block' : 'none';
             pauseBtn.style.display = state.isPaused ? 'none' : 'inline-block';
             resumeBtn.style.display = state.isPaused ? 'inline-block' : 'none';
@@ -2245,7 +2245,6 @@
                     moveToNextPerson(false); // Geluid al afgespeeld bij start schakelmoment
                 }
                 updateTimerDisplay();
-                updatePeopleList();
                 return;
             }
 
@@ -2265,7 +2264,7 @@
             }
 
             updateTimerDisplay();
-            updatePeopleList();
+            // updatePeopleList() niet nodig tijdens timer - lijst is verborgen
         }
 
         // Start countdown before timer
@@ -2336,17 +2335,16 @@
             state.inTransition = false;
             state.transitionTimeRemaining = 0;
 
+            // Verberg personen lijst tijdens standup voor ruimte
+            peopleOverview.style.display = 'none';
+
             updateTimerDisplay();
-            updatePeopleList();
             resetChecklist();
             setupChecklistListeners();
 
             // Show main content, hide status message
             mainContent.style.display = 'grid';
             statusMessage.classList.add('active');
-            
-            // Verberg personen lijst tijdens standup voor ruimte
-            peopleOverview.style.display = 'none';
 
             // Start interval
             state.timerInterval = setInterval(timerTick, 1000);
@@ -2418,8 +2416,8 @@
             
             // Update display
             updateTimerDisplay();
-            updatePeopleList();
             updateControlButtons();
+            // updatePeopleList() niet nodig - standup is afgelopen
         }
 
         // Reset timer
