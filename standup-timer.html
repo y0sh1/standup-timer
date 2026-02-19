@@ -121,6 +121,63 @@
             box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
         }
 
+        .input-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .input-group label input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            cursor: pointer;
+            accent-color: #3fb950;
+            -webkit-appearance: checkbox;
+            appearance: checkbox;
+            flex-shrink: 0;
+        }
+
+        .speaker-order-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            padding: 10px;
+            background: rgba(13, 17, 23, 0.5);
+            border-radius: 8px;
+        }
+
+        .speaker-order-item {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .speaker-order-item.past {
+            background: #21262d;
+            color: #8b949e;
+            opacity: 0.6;
+        }
+
+        .speaker-order-item.current {
+            background: #238636;
+            color: #fff;
+            border-color: #3fb950;
+            box-shadow: 0 0 10px rgba(63, 185, 80, 0.3);
+        }
+
+        .speaker-order-item.upcoming {
+            background: #161b22;
+            color: #c9d1d9;
+            border-color: #30363d;
+        }
+
         .language-toggle-btn {
             width: 100%;
             padding: 14px;
@@ -315,6 +372,31 @@
         .btn-secondary:hover {
             background: #30363d;
             border-color: #58a6ff;
+        }
+
+        .btn-secondary.standup-complete {
+            background: #238636;
+            color: #fff;
+            border-color: #3fb950;
+            box-shadow: 0 0 20px rgba(63, 185, 80, 0.5);
+            animation: pulse-glow 2s ease-in-out infinite;
+            font-weight: 600;
+            transform: scale(1.05);
+        }
+
+        .btn-secondary.standup-complete:hover {
+            background: #2ea043;
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(63, 185, 80, 0.7);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(63, 185, 80, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(63, 185, 80, 0.8);
+            }
         }
 
         .btn-test {
@@ -1513,6 +1595,13 @@
                     <div class="names-hint">Klik op een naam om aanwezigheid te wisselen (groen = aanwezig, rood = afwezig)</div>
                 </div>
                 
+                <div class="input-group">
+                    <label for="soundEnabled">
+                        <input type="checkbox" id="soundEnabled" checked />
+                        <span>Geluid inschakelen</span>
+                    </label>
+                </div>
+                
                 <div class="button-group">
                     <button class="btn btn-primary" id="startBtn">Start Standup</button>
                     <button class="btn btn-secondary" id="resetBtn" disabled>Reset</button>
@@ -1525,6 +1614,7 @@
         <div class="main-content" id="mainContent" style="display: none;">
             <!-- Timer Section -->
             <div class="timer-section">
+                <div class="speaker-order-indicator" id="speakerOrder" style="display: none;"></div>
                 <div class="current-person" id="currentPerson">1</div>
                 <div class="next-person-info" id="nextPersonInfo" style="display: none;">
                     <span class="next-person-label">Volgende:</span>
@@ -1658,7 +1748,8 @@
             inTransition: false,
             transitionTimeRemaining: 0,
             names: [], // Array van {name: string, present: boolean}
-            language: 'nl' // 'nl' of 'en'
+            language: 'nl', // 'nl' of 'en'
+            soundEnabled: true // Geluid aan/uit (default: aan)
         };
 
         // Translations
@@ -1671,6 +1762,7 @@
                 startStandup: 'Start Standup',
                 reset: 'Reset',
                 testSound: '🔊 Test Geluid',
+                soundEnabled: 'Geluid inschakelen',
                 hideSetup: 'Verberg Setup',
                 showSetup: 'Toon Setup',
                 next: 'Volgende:',
@@ -1716,6 +1808,7 @@
                 startStandup: 'Start Standup',
                 reset: 'Reset',
                 testSound: '🔊 Test Sound',
+                soundEnabled: 'Enable sound',
                 hideSetup: 'Hide Setup',
                 showSetup: 'Show Setup',
                 next: 'Next:',
@@ -1795,14 +1888,27 @@
         const countdownOverlay = document.getElementById('countdownOverlay');
         const countdownName = document.getElementById('countdownName');
         const countdownNumber = document.getElementById('countdownNumber');
+        const soundEnabledCheckbox = document.getElementById('soundEnabled');
+        const speakerOrder = document.getElementById('speakerOrder');
 
         // Load saved settings from localStorage
         function loadSettings() {
+            // Initialize defaults
+            state.soundEnabled = true; // Default: geluid aan
+            
             const saved = localStorage.getItem('standupSettings');
             if (saved) {
                 const settings = JSON.parse(saved);
                 totalDurationInput.value = settings.totalDuration || 20;
                 state.language = settings.language || 'nl';
+                // Use saved value if it exists, otherwise keep default true
+                if (settings.soundEnabled !== undefined) {
+                    state.soundEnabled = settings.soundEnabled;
+                }
+            }
+            // Set checkbox state
+            if (soundEnabledCheckbox) {
+                soundEnabledCheckbox.checked = state.soundEnabled;
             }
             // Load names
             const savedNames = localStorage.getItem('standupNames');
@@ -1822,7 +1928,8 @@
         function saveSettings() {
             localStorage.setItem('standupSettings', JSON.stringify({
                 totalDuration: parseInt(totalDurationInput.value),
-                language: state.language
+                language: state.language,
+                soundEnabled: state.soundEnabled
             }));
             localStorage.setItem('standupNames', JSON.stringify(state.names));
         }
@@ -1840,6 +1947,8 @@
             startBtn.textContent = t('startStandup');
             resetBtn.textContent = t('reset');
             testSoundBtn.textContent = t('testSound');
+            const soundLabel = document.querySelector('label[for="soundEnabled"] span');
+            if (soundLabel) soundLabel.textContent = t('soundEnabled');
             const isHidden = setupContent.classList.contains('hidden');
             toggleSetupBtn.textContent = isHidden ? t('showSetup') : t('hideSetup');
             
@@ -1995,6 +2104,7 @@
 
         // Play simple countdown beep
         function playCountdownBeep() {
+            if (!state.soundEnabled) return;
             try {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 
@@ -2040,6 +2150,7 @@
 
         // Play start sound (boxring-achtig: twee korte tonen)
         function playStartSound() {
+            if (!state.soundEnabled) return;
             try {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 
@@ -2074,6 +2185,7 @@
 
         // Play sound notification - Pleasant chime
         function playNotificationSound() {
+            if (!state.soundEnabled) return;
             try {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 
@@ -2258,6 +2370,8 @@
 
         // Update timer display
         function updateTimerDisplay() {
+            updateSpeakerOrder();
+            
             if (state.inTransition) {
                 currentPersonDisplay.style.display = 'none';
                 nextPersonInfo.style.display = 'none';
@@ -2315,6 +2429,30 @@
             // Update total time remaining
             const totalRemaining = state.people.reduce((sum, p) => sum + p.timeRemaining, 0);
             totalTimeRemaining.textContent = formatTime(totalRemaining);
+        }
+
+        // Update speaker order indicator
+        function updateSpeakerOrder() {
+            if (!speakerOrder || !state.isRunning) return;
+            
+            speakerOrder.innerHTML = '';
+            speakerOrder.style.display = 'flex';
+            
+            state.people.forEach((person, index) => {
+                const item = document.createElement('div');
+                item.className = 'speaker-order-item';
+                
+                if (index < state.currentPersonIndex) {
+                    item.className += ' past';
+                } else if (index === state.currentPersonIndex) {
+                    item.className += ' current';
+                } else {
+                    item.className += ' upcoming';
+                }
+                
+                item.textContent = person.name || `${t('person')} ${person.index}`;
+                speakerOrder.appendChild(item);
+            });
         }
 
         // Update people list display (alleen renderen als zichtbaar)
@@ -2623,6 +2761,10 @@
             triggerConfetti();
             showSetupPanel();
             
+            // Enable reset button and add highlight effect
+            resetBtn.disabled = false;
+            resetBtn.classList.add('standup-complete');
+            
             // Update display
             updateTimerDisplay();
             updateControlButtons();
@@ -2653,6 +2795,7 @@
 
             startBtn.disabled = false;
             resetBtn.disabled = true;
+            resetBtn.classList.remove('standup-complete'); // Remove highlight effect
             pauseBtn.style.display = 'none';
             resumeBtn.style.display = 'none';
             nextBtn.style.display = 'none';
@@ -2730,6 +2873,14 @@
         testSoundBtn.addEventListener('click', testSound);
         helpBtn.addEventListener('click', openHelpModal);
         helpModalClose.addEventListener('click', closeHelpModal);
+        
+        // Sound toggle
+        if (soundEnabledCheckbox) {
+            soundEnabledCheckbox.addEventListener('change', function() {
+                state.soundEnabled = this.checked;
+                saveSettings();
+            });
+        }
         
         // Update language toggle button display
         function updateLanguageToggle() {
