@@ -176,7 +176,7 @@
 
         .name-item .name-text {
             flex: 1;
-            pointer-events: none; // Laat clicks door naar parent item
+            pointer-events: none; /* Laat clicks door naar parent item */
         }
 
         .name-item .delete-btn {
@@ -309,6 +309,73 @@
             min-height: 0;
         }
 
+        /* iPad en tablet optimalisatie - single column tijdens standup */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .people-overview {
+                display: none !important; /* Verberg personen lijst op tablet */
+            }
+
+            .timer-section {
+                padding: 15px;
+                min-height: auto;
+            }
+
+            .timer-display {
+                font-size: 90px;
+                margin: 15px 0;
+                letter-spacing: 2px;
+            }
+
+            .current-person {
+                font-size: 26px;
+                margin-bottom: 10px;
+            }
+
+            .next-person-info {
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+
+            .total-time {
+                font-size: 22px;
+                margin-top: 15px;
+            }
+
+            .total-time-label {
+                font-size: 13px;
+            }
+
+            .progress-bar-container {
+                margin: 15px 0;
+                max-width: 100%;
+            }
+
+            .controls {
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 20px;
+                margin-bottom: 10px;
+                width: 100%;
+            }
+
+            .controls .btn {
+                flex: 1 1 calc(50% - 5px);
+                min-width: 140px;
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+
+            .checklist-panel {
+                margin-top: 20px;
+            }
+        }
+
         /* iPad and Tablet Optimizations */
         @media (max-width: 1024px) and (min-width: 769px) {
             .main-content {
@@ -379,6 +446,22 @@
             margin-bottom: 20px;
             text-align: center;
             font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        }
+
+        .next-person-info {
+            font-size: 18px;
+            color: #8b949e;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .next-person-label {
+            margin-right: 8px;
+        }
+
+        .next-person-name {
+            color: #58a6ff;
+            font-weight: 600;
         }
 
         .schakel-moment-label {
@@ -1404,6 +1487,10 @@
             <!-- Timer Section -->
             <div class="timer-section">
                 <div class="current-person" id="currentPerson">1</div>
+                <div class="next-person-info" id="nextPersonInfo" style="display: none;">
+                    <span class="next-person-label">Volgende:</span>
+                    <span class="next-person-name" id="nextPersonName"></span>
+                </div>
                 <div class="schakel-moment-label" id="schakelMomentLabel" style="display: none;">Schakel moment — Volgende: <span id="nextPersonLabel"></span></div>
                 <div class="timer-display" id="timerDisplay">05:30</div>
                 <div class="progress-bar-container">
@@ -1442,8 +1529,8 @@
                     </div>
                 </div>
 
-                <!-- People Overview -->
-                <div class="people-overview">
+                <!-- People Overview - Verborgen tijdens standup voor ruimte -->
+                <div class="people-overview" id="peopleOverview" style="display: none;">
                     <h2>Personen</h2>
                     <div class="people-list" id="peopleList"></div>
                 </div>
@@ -1562,6 +1649,9 @@
         const helpModalClose = document.getElementById('helpModalClose');
         const schakelMomentLabel = document.getElementById('schakelMomentLabel');
         const nextPersonLabel = document.getElementById('nextPersonLabel');
+        const nextPersonInfo = document.getElementById('nextPersonInfo');
+        const nextPersonName = document.getElementById('nextPersonName');
+        const peopleOverview = document.getElementById('peopleOverview');
         const countdownOverlay = document.getElementById('countdownOverlay');
         const countdownName = document.getElementById('countdownName');
         const countdownNumber = document.getElementById('countdownNumber');
@@ -1961,6 +2051,7 @@
         function updateTimerDisplay() {
             if (state.inTransition) {
                 currentPersonDisplay.style.display = 'none';
+                nextPersonInfo.style.display = 'none';
                 schakelMomentLabel.style.display = 'block';
                 const isLast = state.currentPersonIndex >= state.numPeople - 1;
                 if (isLast) {
@@ -1986,6 +2077,20 @@
 
             // Toon naam in plaats van nummer
             currentPersonDisplay.textContent = currentPerson.name || `${currentPerson.index}`;
+
+            // Toon volgende persoon info (als er een volgende is)
+            const isLast = state.currentPersonIndex >= state.numPeople - 1;
+            if (isLast) {
+                nextPersonInfo.style.display = 'none';
+            } else {
+                const nextPerson = state.people[state.currentPersonIndex + 1];
+                if (nextPerson) {
+                    nextPersonInfo.style.display = 'block';
+                    nextPersonName.textContent = nextPerson.name || `Persoon ${nextPerson.index}`;
+                } else {
+                    nextPersonInfo.style.display = 'none';
+                }
+            }
 
             const timeRemaining = currentPerson.timeRemaining;
             timerDisplay.textContent = formatTime(timeRemaining);
@@ -2239,6 +2344,9 @@
             // Show main content, hide status message
             mainContent.style.display = 'grid';
             statusMessage.classList.add('active');
+            
+            // Verberg personen lijst tijdens standup voor ruimte
+            peopleOverview.style.display = 'none';
 
             // Start interval
             state.timerInterval = setInterval(timerTick, 1000);
