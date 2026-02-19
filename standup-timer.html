@@ -121,6 +121,125 @@
             box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
         }
 
+        .names-management {
+            grid-column: 1 / -1;
+        }
+
+        .names-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 8px;
+            background: #0d1117;
+            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .name-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            cursor: pointer;
+            user-select: none;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+
+        .name-item.present {
+            background-color: rgba(46, 160, 67, 0.15);
+            border-color: rgba(46, 160, 67, 0.3);
+            color: #3fb950;
+        }
+
+        .name-item.present:hover {
+            background-color: rgba(46, 160, 67, 0.25);
+            border-color: rgba(46, 160, 67, 0.5);
+        }
+
+        .name-item.absent {
+            background-color: rgba(248, 81, 73, 0.15);
+            border-color: rgba(248, 81, 73, 0.3);
+            color: #f85149;
+        }
+
+        .name-item.absent:hover {
+            background-color: rgba(248, 81, 73, 0.25);
+            border-color: rgba(248, 81, 73, 0.5);
+        }
+
+        .name-item .name-text {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .name-item .delete-btn {
+            background: transparent;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 4px;
+            font-size: 16px;
+            line-height: 1;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+        }
+
+        .name-item .delete-btn:hover {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .add-name-container {
+            display: flex;
+            gap: 6px;
+        }
+
+        .add-name-container input {
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+        .add-name-container .btn-small {
+            padding: 10px 16px;
+            flex: 0 0 auto;
+            min-width: 44px;
+            font-size: 16px;
+        }
+
+        .names-hint {
+            font-size: 11px;
+            color: #8b949e;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .names-list:empty::before {
+            content: "Geen personen toegevoegd. Voeg een naam toe om te beginnen.";
+            display: block;
+            width: 100%;
+            padding: 12px;
+            text-align: center;
+            color: #8b949e;
+            font-style: italic;
+            font-size: 13px;
+        }
+
         .button-group {
             display: flex;
             gap: 10px;
@@ -445,6 +564,8 @@
         .person-number {
             font-size: 18px;
             font-weight: 600;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
 
         .person-time {
@@ -470,6 +591,61 @@
 
         .status-message.active {
             display: none;
+        }
+
+        /* Countdown Overlay */
+        .countdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(13, 17, 23, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .countdown-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .countdown-person {
+            font-size: 24px;
+            color: #8b949e;
+            font-weight: 500;
+        }
+
+        .countdown-name {
+            font-size: 48px;
+            color: #58a6ff;
+            font-weight: 700;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        }
+
+        .countdown-number {
+            font-size: 120px;
+            color: #3fb950;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
         .status-icon {
@@ -645,6 +821,14 @@
 
             .status-title {
                 font-size: 24px;
+            }
+
+            .countdown-name {
+                font-size: 36px;
+            }
+
+            .countdown-number {
+                font-size: 80px;
             }
 
             .status-text {
@@ -1192,13 +1376,21 @@
             </div>
             <div class="setup-content" id="setupContent">
                 <div class="input-group">
-                    <label for="numPeople">Aantal personen</label>
-                    <input type="number" id="numPeople" min="1" max="20" value="4" />
-                </div>
-                <div class="input-group">
                     <label for="totalDuration">Totale duur (minuten)</label>
                     <input type="number" id="totalDuration" min="5" max="60" value="20" />
                 </div>
+                
+                <!-- Namenbeheer -->
+                <div class="input-group names-management">
+                    <label>Personen</label>
+                    <div class="names-list" id="namesList"></div>
+                    <div class="add-name-container">
+                        <input type="text" id="newNameInput" placeholder="Naam toevoegen..." maxlength="50" />
+                        <button class="btn btn-small" id="addNameBtn">+</button>
+                    </div>
+                    <div class="names-hint">Klik op een naam om aanwezigheid te wisselen (groen = aanwezig, rood = afwezig)</div>
+                </div>
+                
                 <div class="button-group">
                     <button class="btn btn-primary" id="startBtn">Start Standup</button>
                     <button class="btn btn-secondary" id="resetBtn" disabled>Reset</button>
@@ -1263,12 +1455,21 @@
             <div class="status-icon">⏱️</div>
             <div class="status-title">Klaar voor de standup</div>
             <div class="status-text">
-                Stel hierboven het aantal personen en de totale duur in,<br>
-                en start de timer wanneer iedereen klaar is.
+                Voeg personen toe, vink aan wie er aanwezig is,<br>
+                stel de totale duur in en start de timer wanneer iedereen klaar is.
             </div>
             <div class="status-hint">
                 <span class="status-hint-icon">💡</span>
                 <span>Tip: Gebruik de test knop om het geluid te controleren</span>
+            </div>
+        </div>
+
+        <!-- Countdown Overlay (shown before starting) -->
+        <div class="countdown-overlay" id="countdownOverlay" style="display: none;">
+            <div class="countdown-content">
+                <div class="countdown-person">Eerste spreker:</div>
+                <div class="countdown-name" id="countdownName"></div>
+                <div class="countdown-number" id="countdownNumber">3</div>
             </div>
         </div>
     </div>
@@ -1327,16 +1528,17 @@
             timerInterval: null,
             isRunning: false,
             isPaused: false,
-            startTime: null,
-            elapsedTime: 0,
             totalElapsedTime: 0,
             inTransition: false,
-            transitionTimeRemaining: 0
+            transitionTimeRemaining: 0,
+            names: [] // Array van {name: string, present: boolean}
         };
 
         // DOM Elements
-        const numPeopleInput = document.getElementById('numPeople');
         const totalDurationInput = document.getElementById('totalDuration');
+        const namesList = document.getElementById('namesList');
+        const newNameInput = document.getElementById('newNameInput');
+        const addNameBtn = document.getElementById('addNameBtn');
         const startBtn = document.getElementById('startBtn');
         const resetBtn = document.getElementById('resetBtn');
         const toggleSetupBtn = document.getElementById('toggleSetup');
@@ -1360,23 +1562,85 @@
         const helpModalClose = document.getElementById('helpModalClose');
         const schakelMomentLabel = document.getElementById('schakelMomentLabel');
         const nextPersonLabel = document.getElementById('nextPersonLabel');
+        const countdownOverlay = document.getElementById('countdownOverlay');
+        const countdownName = document.getElementById('countdownName');
+        const countdownNumber = document.getElementById('countdownNumber');
 
         // Load saved settings from localStorage
         function loadSettings() {
             const saved = localStorage.getItem('standupSettings');
             if (saved) {
                 const settings = JSON.parse(saved);
-                numPeopleInput.value = settings.numPeople || 4;
                 totalDurationInput.value = settings.totalDuration || 20;
             }
+            // Load names
+            const savedNames = localStorage.getItem('standupNames');
+            if (savedNames) {
+                state.names = JSON.parse(savedNames);
+            } else {
+                // Default namen voor eerste gebruik
+                state.names = [];
+            }
+            renderNamesList();
         }
 
         // Save settings to localStorage
         function saveSettings() {
             localStorage.setItem('standupSettings', JSON.stringify({
-                numPeople: parseInt(numPeopleInput.value),
                 totalDuration: parseInt(totalDurationInput.value)
             }));
+            localStorage.setItem('standupNames', JSON.stringify(state.names));
+        }
+
+        // Render names list
+        function renderNamesList() {
+            namesList.innerHTML = '';
+            state.names.forEach((item, index) => {
+                const nameItem = document.createElement('div');
+                nameItem.className = 'name-item' + (item.present ? ' present' : ' absent');
+                
+                const nameText = document.createElement('span');
+                nameText.className = 'name-text';
+                nameText.textContent = item.name;
+                nameText.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    item.present = !item.present;
+                    nameItem.className = 'name-item' + (item.present ? ' present' : ' absent');
+                    saveSettings();
+                });
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '×';
+                deleteBtn.title = 'Verwijderen';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    state.names.splice(index, 1);
+                    renderNamesList();
+                    saveSettings();
+                });
+                
+                nameItem.appendChild(nameText);
+                nameItem.appendChild(deleteBtn);
+                namesList.appendChild(nameItem);
+            });
+        }
+
+        // Add name
+        function addName() {
+            const name = newNameInput.value.trim();
+            if (name && name.length > 0) {
+                // Check if name already exists
+                if (!state.names.some(n => n.name.toLowerCase() === name.toLowerCase())) {
+                    state.names.push({ name: name, present: true });
+                    renderNamesList();
+                    saveSettings();
+                    newNameInput.value = '';
+                    newNameInput.focus();
+                } else {
+                    alert('Deze naam bestaat al.');
+                }
+            }
         }
 
         // Tijd per persoon zodat totaal = spreektijden + schakelmomenten (10% per overgang).
@@ -1388,15 +1652,119 @@
             return Math.floor(totalSec / divisor);
         }
 
-        // Initialize people array
+        // Shuffle array (Fisher-Yates algoritme)
+        function shuffleArray(array) {
+            const shuffled = [...array]; // Maak kopie om origineel niet te wijzigen
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Initialize people array - alleen aangevinkte namen, in willekeurige volgorde
+        // timePerPerson moet al berekend zijn voordat deze functie wordt aangeroepen
         function initializePeople() {
+            const presentNames = state.names.filter(n => n.present);
+            state.numPeople = presentNames.length;
+            
+            if (state.numPeople === 0) {
+                throw new Error('Selecteer minimaal één persoon die aanwezig is.');
+            }
+            
+            // Bereken tijd per persoon op basis van aantal aangevinkte personen
+            state.timePerPerson = calculateTimePerPerson();
+            
+            // Shuffle de namen voor willekeurige volgorde
+            const shuffledNames = shuffleArray(presentNames);
+            
             state.people = [];
-            for (let i = 0; i < state.numPeople; i++) {
+            shuffledNames.forEach((nameItem, i) => {
                 state.people.push({
                     index: i + 1,
+                    name: nameItem.name,
                     timeRemaining: state.timePerPerson,
                     completed: false
                 });
+            });
+        }
+
+        // Play simple countdown beep
+        function playCountdownBeep() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Resume audio context als deze suspended is (browser autoplay policy)
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume().then(() => {
+                        playBeepSound(audioContext);
+                    }).catch(() => {
+                        playBeepSound(audioContext);
+                    });
+                } else {
+                    playBeepSound(audioContext);
+                }
+            } catch (e) {
+                console.log('Countdown beep not available:', e);
+            }
+        }
+
+        // Helper functie om daadwerkelijk het beep geluid te maken
+        function playBeepSound(audioContext) {
+            try {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+
+                // Simpele beep: korte, scherpe toon - luider gemaakt
+                osc.frequency.value = 800; // Midden-hoog toon
+                osc.type = 'sine';
+
+                const t = audioContext.currentTime;
+                gain.gain.setValueAtTime(0, t);
+                gain.gain.linearRampToValueAtTime(0.3, t + 0.01); // Snelle attack, luider
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); // Korte decay
+
+                osc.start(t);
+                osc.stop(t + 0.2);
+            } catch (e) {
+                console.log('Beep sound error:', e);
+            }
+        }
+
+        // Play start sound (boxring-achtig: twee korte tonen)
+        function playStartSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                function playTone(frequency, startTime, duration, volume) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+
+                    osc.frequency.value = frequency;
+                    osc.type = 'sine';
+
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(volume, startTime + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+                    osc.start(startTime);
+                    osc.stop(startTime + duration);
+                }
+
+                const t = audioContext.currentTime;
+                const vol = 0.2;
+                
+                // Twee korte tonen zoals een boxring: "ding ding"
+                playTone(1000, t, 0.1, vol);        // Eerste ding (hogere toon)
+                playTone(800, t + 0.15, 0.1, vol);  // Tweede ding (lagere toon)
+            } catch (e) {
+                console.log('Start sound not available:', e);
             }
         }
 
@@ -1590,7 +1958,12 @@
                 currentPersonDisplay.style.display = 'none';
                 schakelMomentLabel.style.display = 'block';
                 const isLast = state.currentPersonIndex >= state.numPeople - 1;
-                nextPersonLabel.textContent = isLast ? 'Afronden' : (state.currentPersonIndex + 2).toString();
+                if (isLast) {
+                    nextPersonLabel.textContent = 'Afronden';
+                } else {
+                    const nextPerson = state.people[state.currentPersonIndex + 1];
+                    nextPersonLabel.textContent = nextPerson ? nextPerson.name : (state.currentPersonIndex + 2).toString();
+                }
                 timerDisplay.textContent = formatTime(state.transitionTimeRemaining);
                 timerDisplay.classList.remove('warning', 'danger');
                 timerDisplay.classList.add('warning');
@@ -1605,6 +1978,9 @@
 
             const currentPerson = state.people[state.currentPersonIndex];
             if (!currentPerson) return;
+
+            // Toon naam in plaats van nummer
+            currentPersonDisplay.textContent = currentPerson.name || `${currentPerson.index}`;
 
             const timeRemaining = currentPerson.timeRemaining;
             timerDisplay.textContent = formatTime(timeRemaining);
@@ -1642,9 +2018,10 @@
                 }
 
                 card.className = className;
+                const name = person.name || `Persoon ${person.index}`;
                 card.innerHTML = `
                     <div>
-                        <div class="person-number">${person.index}</div>
+                        <div class="person-number">${name}</div>
                         <div class="person-time">${formatTime(person.timeRemaining)}</div>
                     </div>
                 `;
@@ -1679,6 +2056,12 @@
 
         // Move to next person
         function moveToNextPerson(playSound = true) {
+            // Als we in een schakelmoment zitten, stop dat eerst
+            if (state.inTransition) {
+                state.inTransition = false;
+                state.transitionTimeRemaining = 0;
+            }
+
             const currentPerson = state.people[state.currentPersonIndex];
             if (currentPerson) {
                 currentPerson.completed = true;
@@ -1693,7 +2076,8 @@
             // Move to next person
             if (state.currentPersonIndex < state.numPeople - 1) {
                 state.currentPersonIndex++;
-                currentPersonDisplay.textContent = `${state.currentPersonIndex + 1}`;
+                const nextPerson = state.people[state.currentPersonIndex];
+                currentPersonDisplay.textContent = nextPerson ? nextPerson.name : `${state.currentPersonIndex + 1}`;
                 resetChecklist();
                 
                 // Update button visibility
@@ -1763,68 +2147,108 @@
 
             if (currentPerson.timeRemaining <= 0) {
                 currentPerson.timeRemaining = 0;
+                // Eindgeluid (boxring-achtig) om aan te geven dat spreektijd voorbij is
+                playStartSound(); // Hergebruik het startgeluid voor consistentie
                 // Start schakelmoment: 10% van spreektijd
                 state.inTransition = true;
                 state.transitionTimeRemaining = Math.max(1, Math.ceil(state.timePerPerson * 0.1));
-                playNotificationSound();
             }
 
             updateTimerDisplay();
             updatePeopleList();
         }
 
-        // Start timer
-        function startTimer() {
-            const numPeople = parseInt(numPeopleInput.value, 10);
+        // Start countdown before timer
+        function startCountdown() {
             const totalDuration = parseInt(totalDurationInput.value, 10);
 
-            if (isNaN(numPeople) || numPeople < 1) {
-                alert('Vul een geldig aantal personen in (minimaal 1).');
-                numPeopleInput.focus();
+            // Check if at least one person is present
+            const presentCount = state.names.filter(n => n.present).length;
+            if (presentCount === 0) {
+                alert('Selecteer minimaal één persoon die aanwezig is.');
+                newNameInput.focus();
                 return;
             }
+
             if (isNaN(totalDuration) || totalDuration < 1) {
                 alert('Vul een geldige totale duur in (minimaal 1 minuut).');
                 totalDurationInput.focus();
                 return;
             }
 
-            state.numPeople = numPeople;
             state.totalDuration = totalDuration;
-            state.timePerPerson = calculateTimePerPerson();
+            
+            try {
+                initializePeople(); // Dit zet state.numPeople, berekent timePerPerson en initialiseert state.people
+            } catch (error) {
+                alert(error.message);
+                return;
+            }
+
+            // Hide setup panel
+            setupContent.classList.add('hidden');
+            toggleSetupBtn.textContent = 'Toon Setup';
+            startBtn.disabled = true;
+            resetBtn.disabled = false;
+
+            // Show countdown overlay
+            const firstPerson = state.people[0];
+            countdownName.textContent = firstPerson ? firstPerson.name : 'Eerste persoon';
+            countdownOverlay.style.display = 'flex';
+            
+            let countdown = 3;
+            countdownNumber.textContent = countdown;
+            // Speel direct geluid bij 3
+            playCountdownBeep();
+
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    countdownNumber.textContent = countdown;
+                    playCountdownBeep(); // Simpele beep voor elke seconde
+                } else {
+                    clearInterval(countdownInterval);
+                    countdownOverlay.style.display = 'none';
+                    // Start geluid (boxring-achtig)
+                    playStartSound();
+                    // Start de echte timer
+                    startTimerAfterCountdown();
+                }
+            }, 1000);
+        }
+
+        // Start timer after countdown
+        function startTimerAfterCountdown() {
             state.currentPersonIndex = 0;
             state.isRunning = true;
             state.isPaused = false;
-            state.startTime = Date.now();
             state.totalElapsedTime = 0;
+            state.inTransition = false;
+            state.transitionTimeRemaining = 0;
 
-            initializePeople();
             updateTimerDisplay();
             updatePeopleList();
             resetChecklist();
             setupChecklistListeners();
 
-            currentPersonDisplay.textContent = `1`;
-
             // Show main content, hide status message
             mainContent.style.display = 'grid';
             statusMessage.classList.add('active');
-
-            // Hide setup panel automatically when starting
-            setupContent.classList.add('hidden');
-            toggleSetupBtn.textContent = 'Toon Setup';
 
             // Start interval
             state.timerInterval = setInterval(timerTick, 1000);
 
             // Update buttons
-            startBtn.disabled = true;
-            resetBtn.disabled = false;
             pauseBtn.style.display = 'inline-block';
             resumeBtn.style.display = 'none';
             updateControlButtons();
 
             saveSettings();
+        }
+
+        // Start timer (entry point - now starts countdown)
+        function startTimer() {
+            startCountdown();
         }
 
         // Stop timer
@@ -1863,10 +2287,15 @@
         function finishStandup() {
             stopTimer();
             
+            // Stop eventuele schakelmoment
+            state.inTransition = false;
+            state.transitionTimeRemaining = 0;
+            
             // Mark current person as completed
             const currentPerson = state.people[state.currentPersonIndex];
             if (currentPerson) {
                 currentPerson.completed = true;
+                currentPerson.timeRemaining = 0;
             }
             
             // Feestelijk afronden
@@ -1889,6 +2318,9 @@
             state.totalElapsedTime = 0;
             state.inTransition = false;
             state.transitionTimeRemaining = 0;
+
+            // Hide countdown overlay if visible
+            countdownOverlay.style.display = 'none';
 
             mainContent.style.display = 'none';
             statusMessage.classList.remove('active');
@@ -1978,6 +2410,15 @@
         testSoundBtn.addEventListener('click', testSound);
         helpBtn.addEventListener('click', openHelpModal);
         helpModalClose.addEventListener('click', closeHelpModal);
+        
+        // Name management
+        addNameBtn.addEventListener('click', addName);
+        newNameInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addName();
+            }
+        });
         
         // Close modal when clicking outside
         helpModal.addEventListener('click', function(e) {
