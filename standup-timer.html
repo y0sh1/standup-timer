@@ -121,27 +121,32 @@
             box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
         }
 
-        .language-select {
+        .language-toggle-btn {
+            width: 100%;
             padding: 14px;
             background: #0d1117;
-            border: 1px solid #30363d;
+            border: 2px solid #30363d;
             border-radius: 6px;
-            font-size: 17px;
-            color: #c9d1d9;
-            transition: all 0.3s;
+            font-size: 28px;
             cursor: pointer;
-            -webkit-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23c9d1d9' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 14px center;
-            padding-right: 40px;
+            transition: all 0.3s;
+            text-align: center;
         }
 
-        .language-select:focus {
+        .language-toggle-btn:hover {
+            border-color: #58a6ff;
+            background: #161b22;
+            transform: scale(1.05);
+        }
+
+        .language-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
+        .language-toggle-btn:focus {
             outline: none;
             border-color: #58a6ff;
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
         }
 
         .names-management {
@@ -1482,11 +1487,8 @@
             </div>
             <div class="setup-content" id="setupContent">
                 <div class="input-group">
-                    <label for="languageSelect">Taal / Language</label>
-                    <select id="languageSelect" class="language-select">
-                        <option value="nl">Nederlands</option>
-                        <option value="en">English</option>
-                    </select>
+                    <label>Taal / Language</label>
+                    <button class="language-toggle-btn" id="languageToggle" title="Wissel taal / Switch language">🇳🇱</button>
                 </div>
                 <div class="input-group">
                     <label for="totalDuration" data-i18n="totalDuration">Totale duur (minuten)</label>
@@ -1752,7 +1754,7 @@
         }
 
         // DOM Elements
-        const languageSelect = document.getElementById('languageSelect');
+        const languageToggle = document.getElementById('languageToggle');
         const totalDurationInput = document.getElementById('totalDuration');
         const namesList = document.getElementById('namesList');
         const newNameInput = document.getElementById('newNameInput');
@@ -1803,7 +1805,8 @@
                 // Default namen voor eerste gebruik
                 state.names = [];
             }
-            languageSelect.value = state.language;
+            // Update language toggle button
+            updateLanguageToggle();
             renderNamesList();
             updateTranslations();
         }
@@ -2721,9 +2724,24 @@
         helpBtn.addEventListener('click', openHelpModal);
         helpModalClose.addEventListener('click', closeHelpModal);
         
-        // Language toggle
-        languageSelect.addEventListener('change', function() {
-            state.language = this.value;
+        // Update language toggle button display
+        function updateLanguageToggle() {
+            const languages = ['nl', 'en'];
+            const emojis = { 'nl': '🇳🇱', 'en': '🇬🇧' };
+            const titles = { 'nl': 'Nederlands', 'en': 'English' };
+            
+            languageToggle.textContent = emojis[state.language];
+            languageToggle.title = `${titles[state.language]} - Wissel taal / Switch language`;
+        }
+
+        // Language toggle - cycle through languages
+        languageToggle.addEventListener('click', function() {
+            const languages = ['nl', 'en'];
+            const currentIndex = languages.indexOf(state.language);
+            const nextIndex = (currentIndex + 1) % languages.length;
+            state.language = languages[nextIndex];
+            
+            updateLanguageToggle();
             saveSettings();
             updateTranslations();
         });
