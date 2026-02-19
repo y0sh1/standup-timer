@@ -121,6 +121,29 @@
             box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
         }
 
+        .language-select {
+            padding: 14px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            font-size: 17px;
+            color: #c9d1d9;
+            transition: all 0.3s;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23c9d1d9' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 40px;
+        }
+
+        .language-select:focus {
+            outline: none;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
         .names-management {
             grid-column: 1 / -1;
         }
@@ -230,7 +253,7 @@
         }
 
         .names-list:empty::before {
-            content: "Geen personen toegevoegd. Voeg een naam toe om te beginnen.";
+            content: attr(data-empty-text);
             display: block;
             width: 100%;
             padding: 12px;
@@ -1459,7 +1482,14 @@
             </div>
             <div class="setup-content" id="setupContent">
                 <div class="input-group">
-                    <label for="totalDuration">Totale duur (minuten)</label>
+                    <label for="languageSelect">Taal / Language</label>
+                    <select id="languageSelect" class="language-select">
+                        <option value="nl">Nederlands</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="totalDuration" data-i18n="totalDuration">Totale duur (minuten)</label>
                     <input type="number" id="totalDuration" min="5" max="60" value="20" />
                 </div>
                 
@@ -1618,10 +1648,111 @@
             totalElapsedTime: 0,
             inTransition: false,
             transitionTimeRemaining: 0,
-            names: [] // Array van {name: string, present: boolean}
+            names: [], // Array van {name: string, present: boolean}
+            language: 'nl' // 'nl' of 'en'
         };
 
+        // Translations
+        const translations = {
+            nl: {
+                totalDuration: 'Totale duur (minuten)',
+                persons: 'Personen',
+                addNamePlaceholder: 'Naam toevoegen...',
+                namesHint: 'Klik op een naam om aanwezigheid te wisselen (groen = aanwezig, rood = afwezig)',
+                startStandup: 'Start Standup',
+                reset: 'Reset',
+                testSound: '🔊 Test Geluid',
+                hideSetup: 'Verberg Setup',
+                showSetup: 'Toon Setup',
+                next: 'Volgende:',
+                transitionNext: 'Schakel moment — Volgende:',
+                totalRemaining: 'Totaal resterende tijd',
+                pause: 'Pauze',
+                resume: 'Hervatten',
+                nextBtn: '⏭️ Volgende',
+                finish: '✓ Afronden',
+                yesterday: 'Gisteren (wat heb je gedaan)',
+                today: 'Vandaag (wat ga je doen)',
+                blockers: 'Blokkades (waar loop je tegenaan)',
+                ready: 'Klaar voor de standup',
+                readyText: 'Voeg personen toe, vink aan wie er aanwezig is,<br>stel de totale duur in en start de timer wanneer iedereen klaar is.',
+                tip: 'Tip: Gebruik de test knop om het geluid te controleren',
+                firstSpeaker: 'Eerste spreker:',
+                firstPerson: 'Eerste persoon',
+                finishLabel: 'Afronden',
+                person: 'Persoon',
+                noNames: 'Geen personen toegevoegd. Voeg een naam toe om te beginnen.',
+                delete: 'Verwijderen',
+                nameExists: 'Deze naam bestaat al.',
+                selectPerson: 'Selecteer minimaal één persoon die aanwezig is.',
+                validDuration: 'Vul een geldige totale duur in (minimaal 1 minuut).',
+                helpTitle: 'Keyboard Shortcuts',
+                close: 'Sluiten',
+                helpShortcuts: {
+                    space: 'Start standup / Pauze / Hervatten',
+                    n: 'Volgende persoon (tijdens standup)',
+                    f: 'Afronden (bij laatste persoon)',
+                    r: 'Reset (wanneer standup niet actief)',
+                    esc: 'Setup panel tonen/verbergen of help sluiten',
+                    h: 'Help modal openen'
+                },
+                helpTitleAttr: 'Help & Keyboard Shortcuts',
+                fullscreenTitle: 'Volledig scherm'
+            },
+            en: {
+                totalDuration: 'Total duration (minutes)',
+                persons: 'People',
+                addNamePlaceholder: 'Add name...',
+                namesHint: 'Click on a name to toggle presence (green = present, red = absent)',
+                startStandup: 'Start Standup',
+                reset: 'Reset',
+                testSound: '🔊 Test Sound',
+                hideSetup: 'Hide Setup',
+                showSetup: 'Show Setup',
+                next: 'Next:',
+                transitionNext: 'Transition — Next:',
+                totalRemaining: 'Total remaining time',
+                pause: 'Pause',
+                resume: 'Resume',
+                nextBtn: '⏭️ Next',
+                finish: '✓ Finish',
+                yesterday: 'Yesterday (what did you do)',
+                today: 'Today (what will you do)',
+                blockers: 'Blockers (what are you stuck on)',
+                ready: 'Ready for standup',
+                readyText: 'Add people, mark who is present,<br>set the total duration and start the timer when everyone is ready.',
+                tip: 'Tip: Use the test button to check the sound',
+                firstSpeaker: 'First speaker:',
+                firstPerson: 'First person',
+                finishLabel: 'Finish',
+                person: 'Person',
+                noNames: 'No people added. Add a name to get started.',
+                delete: 'Delete',
+                nameExists: 'This name already exists.',
+                selectPerson: 'Select at least one person who is present.',
+                validDuration: 'Enter a valid total duration (minimum 1 minute).',
+                helpTitle: 'Keyboard Shortcuts',
+                close: 'Close',
+                helpShortcuts: {
+                    space: 'Start standup / Pause / Resume',
+                    n: 'Next person (during standup)',
+                    f: 'Finish (for last person)',
+                    r: 'Reset (when standup is not active)',
+                    esc: 'Show/hide setup panel or close help',
+                    h: 'Open help modal'
+                },
+                helpTitleAttr: 'Help & Keyboard Shortcuts',
+                fullscreenTitle: 'Fullscreen'
+            }
+        };
+
+        // Get translation
+        function t(key) {
+            return translations[state.language]?.[key] || translations.nl[key] || key;
+        }
+
         // DOM Elements
+        const languageSelect = document.getElementById('languageSelect');
         const totalDurationInput = document.getElementById('totalDuration');
         const namesList = document.getElementById('namesList');
         const newNameInput = document.getElementById('newNameInput');
@@ -1662,6 +1793,7 @@
             if (saved) {
                 const settings = JSON.parse(saved);
                 totalDurationInput.value = settings.totalDuration || 20;
+                state.language = settings.language || 'nl';
             }
             // Load names
             const savedNames = localStorage.getItem('standupNames');
@@ -1671,15 +1803,82 @@
                 // Default namen voor eerste gebruik
                 state.names = [];
             }
+            languageSelect.value = state.language;
             renderNamesList();
+            updateTranslations();
         }
 
         // Save settings to localStorage
         function saveSettings() {
             localStorage.setItem('standupSettings', JSON.stringify({
-                totalDuration: parseInt(totalDurationInput.value)
+                totalDuration: parseInt(totalDurationInput.value),
+                language: state.language
             }));
             localStorage.setItem('standupNames', JSON.stringify(state.names));
+        }
+
+        // Update all translations
+        function updateTranslations() {
+            // Setup labels
+            document.querySelector('label[for="totalDuration"]').textContent = t('totalDuration');
+            document.querySelector('.names-management label').textContent = t('persons');
+            newNameInput.placeholder = t('addNamePlaceholder');
+            document.querySelector('.names-hint').textContent = t('namesHint');
+            namesList.setAttribute('data-empty-text', t('noNames'));
+            
+            // Buttons
+            startBtn.textContent = t('startStandup');
+            resetBtn.textContent = t('reset');
+            testSoundBtn.textContent = t('testSound');
+            const isHidden = setupContent.classList.contains('hidden');
+            toggleSetupBtn.textContent = isHidden ? t('showSetup') : t('hideSetup');
+            
+            // Timer section
+            document.querySelector('.next-person-label').textContent = t('next');
+            document.querySelector('.total-time-label').textContent = t('totalRemaining');
+            pauseBtn.textContent = t('pause');
+            resumeBtn.textContent = t('resume');
+            nextBtn.textContent = t('nextBtn');
+            finishBtn.textContent = t('finish');
+            
+            // Checklist
+            document.querySelector('label[for="check1"]').textContent = t('yesterday');
+            document.querySelector('label[for="check2"]').textContent = t('today');
+            document.querySelector('label[for="check3"]').textContent = t('blockers');
+            
+            // Status message
+            document.querySelector('.status-title').textContent = t('ready');
+            document.querySelector('.status-text').innerHTML = t('readyText');
+            document.querySelector('.status-hint span:last-child').textContent = t('tip');
+            
+            // Countdown
+            document.querySelector('.countdown-person').textContent = t('firstSpeaker');
+            
+            // Help modal
+            document.querySelector('.help-modal-header h2').textContent = t('helpTitle');
+            document.querySelector('.help-modal-close').setAttribute('aria-label', t('close'));
+            helpBtn.setAttribute('title', t('helpTitleAttr'));
+            fullscreenBtn.setAttribute('title', t('fullscreenTitle'));
+            
+            // Help shortcuts
+            const shortcutItems = document.querySelectorAll('.help-shortcut-item');
+            if (shortcutItems.length >= 5) {
+                shortcutItems[0].querySelector('.help-shortcut-desc').textContent = t('helpShortcuts').space;
+                shortcutItems[1].querySelector('.help-shortcut-desc').textContent = t('helpShortcuts').n;
+                shortcutItems[2].querySelector('.help-shortcut-desc').textContent = t('helpShortcuts').f;
+                shortcutItems[3].querySelector('.help-shortcut-desc').textContent = t('helpShortcuts').r;
+                shortcutItems[4].querySelector('.help-shortcut-desc').textContent = t('helpShortcuts').esc;
+                if (shortcutItems.length >= 6) {
+                    shortcutItems[5].querySelector('.help-shortcut-desc').textContent = t('helpShortcuts').h;
+                }
+            }
+            
+            // Update schakelmoment label template
+            const schakelLabel = document.getElementById('schakelMomentLabel');
+            if (schakelLabel) {
+                const transitionText = t('transitionNext');
+                schakelLabel.innerHTML = transitionText + ' <span id="nextPersonLabel"></span>';
+            }
         }
 
         // Render names list
@@ -1707,7 +1906,7 @@
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'delete-btn';
                 deleteBtn.textContent = '×';
-                deleteBtn.title = 'Verwijderen';
+                deleteBtn.title = t('delete');
                 deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation(); // Voorkom dat click op item ook wordt getriggerd
                     state.names.splice(index, 1);
@@ -1733,7 +1932,7 @@
                     newNameInput.value = '';
                     newNameInput.focus();
                 } else {
-                    alert('Deze naam bestaat al.');
+                    alert(t('nameExists'));
                 }
             }
         }
@@ -2055,7 +2254,7 @@
                 schakelMomentLabel.style.display = 'block';
                 const isLast = state.currentPersonIndex >= state.numPeople - 1;
                 if (isLast) {
-                    nextPersonLabel.textContent = 'Afronden';
+                    nextPersonLabel.textContent = t('finishLabel');
                 } else {
                     const nextPerson = state.people[state.currentPersonIndex + 1];
                     nextPersonLabel.textContent = nextPerson ? nextPerson.name : (state.currentPersonIndex + 2).toString();
@@ -2085,7 +2284,7 @@
             } else {
                 const nextPerson = state.people[state.currentPersonIndex + 1];
                 nextPersonInfo.style.display = 'block';
-                nextPersonName.textContent = nextPerson.name || `Persoon ${nextPerson.index}`;
+                nextPersonName.textContent = nextPerson.name || `${t('person')} ${nextPerson.index}`;
             }
 
             const timeRemaining = currentPerson.timeRemaining;
@@ -2129,7 +2328,7 @@
                 }
 
                 card.className = className;
-                const name = person.name || `Persoon ${person.index}`;
+                const name = person.name || `${t('person')} ${person.index}`;
                 card.innerHTML = `
                     <div>
                         <div class="person-number">${name}</div>
@@ -2274,13 +2473,13 @@
             // Check if at least one person is present
             const presentCount = state.names.filter(n => n.present).length;
             if (presentCount === 0) {
-                alert('Selecteer minimaal één persoon die aanwezig is.');
+                alert(t('selectPerson'));
                 newNameInput.focus();
                 return;
             }
 
             if (isNaN(totalDuration) || totalDuration < 1) {
-                alert('Vul een geldige totale duur in (minimaal 1 minuut).');
+                alert(t('validDuration'));
                 totalDurationInput.focus();
                 return;
             }
@@ -2296,13 +2495,13 @@
 
             // Hide setup panel
             setupContent.classList.add('hidden');
-            toggleSetupBtn.textContent = 'Toon Setup';
+            toggleSetupBtn.textContent = t('showSetup');
             startBtn.disabled = true;
             resetBtn.disabled = false;
 
             // Show countdown overlay
             const firstPerson = state.people[0];
-            countdownName.textContent = firstPerson ? firstPerson.name : 'Eerste persoon';
+            countdownName.textContent = firstPerson ? firstPerson.name : t('firstPerson');
             countdownOverlay.style.display = 'flex';
             
             let countdown = 3;
@@ -2440,7 +2639,7 @@
 
             // Show setup panel again when resetting
             setupContent.classList.remove('hidden');
-            toggleSetupBtn.textContent = 'Verberg Setup';
+            toggleSetupBtn.textContent = t('hideSetup');
 
             startBtn.disabled = false;
             resetBtn.disabled = true;
@@ -2455,7 +2654,7 @@
         // Show setup panel (e.g. after standup ends)
         function showSetupPanel() {
             setupContent.classList.remove('hidden');
-            toggleSetupBtn.textContent = 'Verberg Setup';
+            toggleSetupBtn.textContent = t('hideSetup');
             // Scroll setup into view so user sees Start/Reset
             document.querySelector('.setup-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -2464,8 +2663,8 @@
         function toggleSetup() {
             setupContent.classList.toggle('hidden');
             toggleSetupBtn.textContent = setupContent.classList.contains('hidden') 
-                ? 'Toon Setup' 
-                : 'Verberg Setup';
+                ? t('showSetup') 
+                : t('hideSetup');
         }
 
         // Fullscreen functionality
@@ -2522,6 +2721,13 @@
         helpBtn.addEventListener('click', openHelpModal);
         helpModalClose.addEventListener('click', closeHelpModal);
         
+        // Language toggle
+        languageSelect.addEventListener('change', function() {
+            state.language = this.value;
+            saveSettings();
+            updateTranslations();
+        });
+
         // Name management
         addNameBtn.addEventListener('click', addName);
         newNameInput.addEventListener('keydown', function(e) {
