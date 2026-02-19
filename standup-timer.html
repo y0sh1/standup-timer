@@ -176,7 +176,7 @@
 
         .name-item .name-text {
             flex: 1;
-            cursor: pointer;
+            pointer-events: none; // Laat clicks door naar parent item
         }
 
         .name-item .delete-btn {
@@ -1599,22 +1599,27 @@
                 const nameItem = document.createElement('div');
                 nameItem.className = 'name-item' + (item.present ? ' present' : ' absent');
                 
-                const nameText = document.createElement('span');
-                nameText.className = 'name-text';
-                nameText.textContent = item.name;
-                nameText.addEventListener('click', (e) => {
-                    e.stopPropagation();
+                // Click op hele item toggle aanwezigheid (behalve op delete button)
+                nameItem.addEventListener('click', (e) => {
+                    // Als klik op delete button, niet toggle
+                    if (e.target.classList.contains('delete-btn')) {
+                        return;
+                    }
                     item.present = !item.present;
                     nameItem.className = 'name-item' + (item.present ? ' present' : ' absent');
                     saveSettings();
                 });
+                
+                const nameText = document.createElement('span');
+                nameText.className = 'name-text';
+                nameText.textContent = item.name;
                 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'delete-btn';
                 deleteBtn.textContent = '×';
                 deleteBtn.title = 'Verwijderen';
                 deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
+                    e.stopPropagation(); // Voorkom dat click op item ook wordt getriggerd
                     state.names.splice(index, 1);
                     renderNamesList();
                     saveSettings();
